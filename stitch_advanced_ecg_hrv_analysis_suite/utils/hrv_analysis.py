@@ -1,147 +1,192 @@
+"""
+HRV Analysis: Ectopic removal, time-domain, frequency-domain, and non-linear metrics.
+"""
 import numpy as np
+import pandas as pd
 import scipy.signal as sig
 from scipy.interpolate import interp1d
 
-def remove_ectopic_beats(rr_ms: np.ndarray, method="linear", threshold=0.2):
+
+# ── ECTOPIC BEAT HANDLING ──────────────────────────────────────────────────────
+
+def detect_ectopic_beats(rr_ms: np.ndarray, threshold: float = 0.20) -> np.ndarray:
     """
-    Detects and corrects ectopic beats (outliers in RR interval sequence).
-    threshold: deviation factor from median RR (e.g., 0.2 means 20% deviation).
-    method: "linear" or "spline" for interpolation.
-    
-    Returns:
-        clean_rr: the interpolated RR sequence
-        outliers: boolean array indicating which RR intervals were identified as ectopic
+    Detect ectopic beats using a moving-median deviation rule.
+    Returns boolean mask: True = ectopic.
     """
     if len(rr_ms) < 5:
-        return rr_ms, np.zeros(len(rr_ms), dtype=bool)
-
-    # Use a rolling median to detect local outliers
-    # Window size 5
-    import pandas as pd
+        return np.zeros(len(rr_ms), dtype=bool)
     series = pd.Series(rr_ms)
-    rolling_median = series.rolling(window=5, center=True).median()
-    # Filling NaNs at the edges with global median or nearest valid
-    rolling_median = rolling_median.fillna(series.median())
-    
-    # Calculate relative deviation
-    deviation = np.abs(series - rolling_median) / rolling_median
-    
-    outliers = (deviation > threshold).values
-    
-    clean_rr = rr_ms.copy()
-    if np.any(outliers):
-        valid_indices = np.where(~outliers)[0]
-        outlier_indices = np.where(outliers)[0]
-        
-        if len(valid_indices) > 1:
-            try:
-                if method.lower() == "spline":
-                    # degree 3 if enough valid points
-                    k = 3 if len(valid_indices) > 3 else 1
-                    interp_func = interp1d(valid_indices, clean_rr[valid_indices], kind=k, fill_value="extrapolate")
-                else:
-                    # linear default
-                    interp_func = interp1d(valid_indices, clean_rr[valid_indices], kind='linear', fill_value="extrapolate")
-                
-                clean_rr[outlier_indices] = interp_func(outlier_indices)
-            except Exception as e:
-                # Fallback to linear if spline fails
-                interp_func = interp1d(valid_indices, clean_rr[valid_indices], kind='linear', fill_value="extrapolate")
-                clean_rr[outlier_indices] = interp_func(outlier_indices)
-                
-    return clean_rr, outliers
+    rolling_median = series.rolling(window=5, center=True, min_periods=1).median()
+    deviation = np.abs(series.values - rolling_median.values) / rolling_median.values
+    return deviation > threshold
 
-def get_time_domain_hrv(rr_ms: np.ndarray):
+
+def correct_ectopic_beats(rr_ms: np.ndarray, mask: np.ndarray, method: str = "Linear") -> np.ndarray:
     """
-    Calculates time-domain HRV metrics.
+    Interpolate over ectopic-flagged beats.
+    method: "Linear" | "Spline"
     """
-    if len(rr_ms) < 2:
+    clean = rr_ms.copy()
+    if not np.any(mask):
+        return clean
+    valid_idx = np.where(~mask)[0]
+    if len(valid_idx) < 2:
+        return clean
+    ectopic_idx = np.where(mask)[0]
+    try:
+        kind = 'cubic' if method == "Spline" and len(valid_idx) > 3 else 'linear'
+        f = interp1d(valid_idx, clean[valid_idx], kind=kind, fill_value="extrapolate")
+        clean[ectopic_idx] = f(ectopic_idx)
+    except Exception:
+        f = interp1d(valid_idx, clean[valid_idx], kind='linear', fill_value="extrapolate")
+        clean[ectopic_idx] = f(ectopic_idx)
+    return clean
+
+
+# ── TIME-DOMAIN HRV ───────────────────────────────────────────────────────────
+
+def get_time_domain_hrv(rr_ms: np.ndarray) -> dict:
+    """Compute standard time-domain HRV metrics."""
+    if len(rr_ms) < 3:
         return {}
-    
-    mean_rr = np.mean(rr_ms)
-    sdnn = np.std(rr_ms, ddof=1)
-    
+    mean_rr = float(np.mean(rr_ms))
+    sdnn = float(np.std(rr_ms, ddof=1))
     diff_rr = np.diff(rr_ms)
-    rmssd = np.sqrt(np.mean(diff_rr**2))
-    
-    nn50 = np.sum(np.abs(diff_rr) > 50)
-    pnn50 = (nn50 / len(diff_rr)) * 100 if len(diff_rr) > 0 else 0
-    
+    rmssd = float(np.sqrt(np.mean(diff_rr ** 2)))
+    nn50 = int(np.sum(np.abs(diff_rr) > 50))
+    pnn50 = float(nn50 / len(diff_rr) * 100) if len(diff_rr) > 0 else 0.0
+    mean_hr = float(60000.0 / mean_rr) if mean_rr > 0 else 0.0
     return {
-        "Mean RR (ms)": mean_rr,
-        "SDNN (ms)": sdnn,
-        "RMSSD (ms)": rmssd,
+        "Mean RR (ms)": round(mean_rr, 2),
+        "SDNN (ms)": round(sdnn, 2),
+        "RMSSD (ms)": round(rmssd, 2),
         "NN50": nn50,
-        "pNN50 (%)": pnn50
+        "pNN50 (%)": round(pnn50, 2),
+        "Mean HR (bpm)": round(mean_hr, 1),
     }
 
-def get_freq_domain_hrv(rr_ms: np.ndarray, vlf_band=(0.0, 0.04), lf_band=(0.04, 0.15), hf_band=(0.15, 0.4)):
+
+# ── FREQUENCY-DOMAIN HRV ──────────────────────────────────────────────────────
+
+def get_freq_domain_hrv(rr_ms: np.ndarray,
+                         vlf_band: tuple = (0.003, 0.04),
+                         lf_band: tuple = (0.04, 0.15),
+                         hf_band: tuple = (0.15, 0.40),
+                         fs_resample: float = 4.0):
     """
-    Calculates Frequency-domain HRV using Welch's method via resampling RR sequence to a continuous time series.
+    Compute Welch PSD and band powers. Resamples the irregularly-spaced
+    RR tachogram to a uniform grid at fs_resample Hz.
+    Returns: (metrics_dict, freqs_array, psd_array)
     """
     if len(rr_ms) < 10:
         return None, None, None
-    
-    # 1. Resample RR intervals (which are unevenly spaced) at 4 Hz
-    fs_resample = 4.0 
-    t = np.cumsum(rr_ms) / 1000.0 # Time axis in seconds
-    t = t - t[0] # start from 0
-    
-    t_interp = np.arange(0, t[-1], 1.0 / fs_resample)
-    f_interp = interp1d(t, rr_ms, kind='cubic', fill_value="extrapolate")
-    rr_interp = f_interp(t_interp)
-    
-    # 2. Compute PSD using Welch's method
-    # Nperseg should be around 256 for sufficient resolution at 4Hz, 
-    # but bounded by length of resampled data
-    nperseg = min(256, len(rr_interp))
-    freqs, psd = sig.welch(rr_interp, fs=fs_resample, nperseg=nperseg, scaling='density')
-    
-    # 3. Calculate Power in bands
-    def band_power(f_min, f_max):
-        idx = np.logical_and(freqs >= f_min, freqs < f_max)
-        # Using trapezoidal integration
+
+    # Build time axis (cumulative sum in seconds)
+    t = np.cumsum(rr_ms) / 1000.0
+    t -= t[0]
+
+    t_uniform = np.arange(0, t[-1], 1.0 / fs_resample)
+    if len(t_uniform) < 64:
+        return None, None, None
+
+    try:
+        f_interp = interp1d(t, rr_ms, kind='cubic', fill_value="extrapolate")
+        rr_uniform = f_interp(t_uniform)
+    except Exception:
+        return None, None, None
+
+    nperseg = min(256, len(rr_uniform) // 2)
+    freqs, psd = sig.welch(rr_uniform, fs=fs_resample, nperseg=nperseg, scaling='density')
+
+    def band_power(fmin, fmax):
+        idx = np.logical_and(freqs >= fmin, freqs < fmax)
         if np.sum(idx) > 1:
-            # Fallback to scipy or new numpy 2.0 syntax
             try:
-                return np.trapezoid(psd[idx], freqs[idx])
+                return float(np.trapezoid(psd[idx], freqs[idx]))
             except AttributeError:
-                # Fallback for old numpy versions just in case
-                return np.trapz(psd[idx], freqs[idx])
+                return float(np.trapz(psd[idx], freqs[idx]))
         return 0.0
 
     vlf = band_power(*vlf_band)
     lf = band_power(*lf_band)
     hf = band_power(*hf_band)
-    
-    ratio = lf / hf if hf > 0 else float('nan')
-    total_power = vlf + lf + hf
-    
+    total = vlf + lf + hf
+
     metrics = {
-        "VLF Power": vlf,
-        "LF Power": lf,
-        "HF Power": hf,
-        "LF/HF Ratio": ratio,
-        "Total Power": total_power
+        "VLF Power (ms²)": round(vlf, 2),
+        "LF Power (ms²)": round(lf, 2),
+        "HF Power (ms²)": round(hf, 2),
+        "LF/HF Ratio": round(lf / hf, 3) if hf > 0 else float('nan'),
+        "Total Power (ms²)": round(total, 2),
+        "LF norm (%)": round(lf / (lf + hf) * 100, 1) if (lf + hf) > 0 else 0.0,
+        "HF norm (%)": round(hf / (lf + hf) * 100, 1) if (lf + hf) > 0 else 0.0,
     }
-    
     return metrics, freqs, psd
 
-def get_nonlinear_hrv(rr_ms: np.ndarray):
-    """
-    Computes Poincare (SD1, SD2) metrics.
-    """
+
+# ── NON-LINEAR HRV ────────────────────────────────────────────────────────────
+
+def get_nonlinear_hrv(rr_ms: np.ndarray) -> dict:
+    """Compute Poincaré SD1, SD2 and ratio."""
     if len(rr_ms) < 2:
         return {}
-    
     rr_n = rr_ms[:-1]
     rr_n1 = rr_ms[1:]
-    
-    sd1 = np.std(np.subtract(rr_n, rr_n1) / np.sqrt(2), ddof=1)
-    sd2 = np.std(np.add(rr_n, rr_n1) / np.sqrt(2), ddof=1)
-    
+    sd1 = float(np.std((rr_n - rr_n1) / np.sqrt(2), ddof=1))
+    sd2 = float(np.std((rr_n + rr_n1) / np.sqrt(2), ddof=1))
     return {
-        "SD1 (ms)": sd1,
-        "SD2 (ms)": sd2,
-        "SD1/SD2": sd1/sd2 if sd2 > 0 else float('nan')
+        "SD1 (ms)": round(sd1, 2),
+        "SD2 (ms)": round(sd2, 2),
+        "SD1/SD2": round(sd1 / sd2, 3) if sd2 > 0 else float('nan'),
+        "Ellipse Area (ms²)": round(np.pi * sd1 * sd2, 2),
     }
+
+
+def interpret_hrv(time_metrics: dict, freq_metrics: dict) -> dict:
+    """
+    Generate clinical interpretation strings for the report.
+    Returns dict with keys: 'autonomic', 'sdnn_class', 'lf_hf_class'
+    """
+    interpretation = {}
+    sdnn = time_metrics.get("SDNN (ms)", 0)
+    rmssd = time_metrics.get("RMSSD (ms)", 0)
+    lf_hf = freq_metrics.get("LF/HF Ratio", float('nan')) if freq_metrics else float('nan')
+
+    # SDNN classification
+    if sdnn > 100:
+        interpretation["sdnn_class"] = "Excellent cardiac autonomic function (SDNN > 100 ms)."
+    elif sdnn > 50:
+        interpretation["sdnn_class"] = "Normal cardiac autonomic function (50–100 ms range)."
+    else:
+        interpretation["sdnn_class"] = "Reduced HRV: potential autonomic dysfunction (SDNN < 50 ms)."
+
+    # LF/HF interpretation
+    import math
+    if math.isnan(lf_hf):
+        interpretation["lf_hf_class"] = "Frequency-domain data unavailable."
+    elif lf_hf > 2.0:
+        interpretation["lf_hf_class"] = (
+            f"LF/HF = {lf_hf:.2f} → Sympathetic dominance detected. "
+            "May indicate mental or physiological stress, exercise, or standing posture."
+        )
+    elif lf_hf < 1.0:
+        interpretation["lf_hf_class"] = (
+            f"LF/HF = {lf_hf:.2f} → Parasympathetic dominance (vagal tone). "
+            "Associated with rest, recovery, or supine posture."
+        )
+    else:
+        interpretation["lf_hf_class"] = (
+            f"LF/HF = {lf_hf:.2f} → Balanced sympathovagal modulation. "
+            "Typical of normal resting state."
+        )
+
+    # RMSSD (short-term vagal activity)
+    if rmssd > 40:
+        interpretation["autonomic"] = "High vagal (parasympathetic) tone: good recovery capacity."
+    elif rmssd > 20:
+        interpretation["autonomic"] = "Moderate vagal tone: typical resting state."
+    else:
+        interpretation["autonomic"] = "Low vagal tone: elevated sympathetic activity or poor HRV."
+
+    return interpretation

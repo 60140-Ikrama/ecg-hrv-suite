@@ -1,62 +1,63 @@
-import scipy.signal as sig
-import pywt
+"""
+Signal Processing: Bandpass filtering, baseline wander removal, and noise filtering.
+"""
 import numpy as np
+import scipy.signal as sig
+
 
 def apply_bandpass_filter(signal: np.ndarray, sfreq: float, lowcut: float = 0.5, highcut: float = 40.0, order: int = 3):
-    """
-    Applies a Butterworth bandpass filter.
-    """
     nyquist = 0.5 * sfreq
     low = lowcut / nyquist
     high = highcut / nyquist
-    
-    # Handle edge case where highcut >= nyquist
-    if high >= 1.0:
-        high = 0.99
-    
+    high = min(high, 0.99)
+    low = max(low, 0.001)
+    if low >= high:
+        high = min(low + 0.01, 0.99)
     b, a = sig.butter(order, [low, high], btype='band')
     return sig.filtfilt(b, a, signal)
 
-def remove_baseline_wander(signal: np.ndarray, sfreq: float):
-    """
-    Removes baseline wander using a high-pass filter (0.5 Hz is standard for ECG)
-    or median filtering. Here we use an IIR Butterworth high-pass.
-    """
+
+def remove_baseline_wander(signal: np.ndarray, sfreq: float, cutoff: float = 0.5):
     nyquist = 0.5 * sfreq
-    cutoff = 0.5 / nyquist
-    b, a = sig.butter(3, cutoff, btype='high')
+    c = cutoff / nyquist
+    c = max(min(c, 0.99), 0.001)
+    b, a = sig.butter(3, c, btype='high')
     return sig.filtfilt(b, a, signal)
 
-def apply_noise_filter(signal: np.ndarray, method: str = 'None'):
-    """
-    Apply additional noise filtering (e.g. Wavelet denoising).
-    """
-    if method == "None":
-        return signal
-    elif method == "Wavelet":
-        # Wavelet thresholding
+
+def apply_notch_filter(signal: np.ndarray, sfreq: float, freq: float = 50.0, Q: float = 30.0):
+    """Notch filter for powerline interference."""
+    b, a = sig.iirnotch(freq / (0.5 * sfreq), Q)
+    return sig.filtfilt(b, a, signal)
+
+
+def apply_wavelet_denoise(signal: np.ndarray):
+    """Wavelet-based denoising."""
+    try:
+        import pywt
         coeffs = pywt.wavedec(signal, 'db4', level=4)
         sigma = np.median(np.abs(coeffs[-1])) / 0.6745
-        uthresh = sigma * np.sqrt(2 * np.log(len(signal)))
-        coeffs[1:] = (pywt.threshold(i, value=uthresh, mode='soft') for i in coeffs[1:])
-        return pywt.waverec(coeffs, 'db4')
-    elif method == "Powerline Removal (50/60 Hz)":
-        # This typically needs sfreq. We will just return the signal here 
-        # and recommend explicit notch filtering if needed.
+        uthresh = sigma * np.sqrt(2 * np.log(max(len(signal), 1)))
+        coeffs[1:] = [pywt.threshold(c, value=uthresh, mode='soft') for c in coeffs[1:]]
+        denoised = pywt.waverec(coeffs, 'db4')
+        return denoised[:len(signal)]
+    except ImportError:
         return signal
-    return signal
 
-def preprocess_ecg(signal: np.ndarray, sfreq: float, 
-                   lowcut: float = 0.5, highcut: float = 40.0, 
-                   remove_baseline: bool = True, noise_method: str = 'None'):
-    """
-    Full preprocessing pipeline.
-    """
-    clean_sig = signal.copy()
+
+def preprocess_ecg(signal: np.ndarray, sfreq: float,
+                   lowcut: float = 0.5, highcut: float = 40.0,
+                   remove_baseline: bool = True,
+                   noise_method: str = 'None') -> np.ndarray:
+    """Full preprocessing pipeline."""
+    clean = signal.copy().astype(float)
     if remove_baseline:
-        clean_sig = remove_baseline_wander(clean_sig, sfreq)
-        
-    clean_sig = apply_bandpass_filter(clean_sig, sfreq, lowcut, highcut)
-    clean_sig = apply_noise_filter(clean_sig, method=noise_method)
-    
-    return clean_sig
+        clean = remove_baseline_wander(clean, sfreq)
+    clean = apply_bandpass_filter(clean, sfreq, lowcut, highcut)
+    if noise_method == "Wavelet":
+        clean = apply_wavelet_denoise(clean)
+    elif noise_method == "Powerline 50Hz":
+        clean = apply_notch_filter(clean, sfreq, freq=50.0)
+    elif noise_method == "Powerline 60Hz":
+        clean = apply_notch_filter(clean, sfreq, freq=60.0)
+    return clean
