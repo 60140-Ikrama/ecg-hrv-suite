@@ -1,33 +1,39 @@
-import neurokit2 as nk
+"""
+R-Peak detection using NeuroKit2 (Pan-Tompkins, Hamilton, NeuroKit methods).
+"""
 import numpy as np
-import pandas as pd
 
-def detect_r_peaks(ecg_cleaned: np.ndarray, sfreq: float, method: str = 'neurokit'):
-    """
-    Detects R-peaks in the cleaned ECG signal.
-    Returns:
-        rpeaks: dict containing 'ECG_R_Peaks': array of sample indices
-    """
-    try:
-        # We can support different methods
-        # options: "pantompkins1985", "neurokit", "hamilton2002", etc.
-        method_map = {
-            "Pan-Tompkins": "pantompkins1985",
-            "NeuroKit": "neurokit",
-            "Hamilton": "hamilton2002"
-        }
-        nk_method = method_map.get(method, "neurokit")
-        _, rpeaks = nk.ecg_peaks(ecg_cleaned, sampling_rate=int(sfreq), method=nk_method)
-        return rpeaks['ECG_R_Peaks']
-    except Exception as e:
-        raise RuntimeError(f"Peak detection failed using method {method}: {e}")
 
-def get_rr_intervals(rpeaks_indices: np.ndarray, sfreq: float):
+def detect_r_peaks(ecg_cleaned: np.ndarray, sfreq: float, method: str = 'NeuroKit') -> np.ndarray:
     """
-    Calculates RR intervals from R-peak indices.
-    Returns:
-        rr_intervals: array of RR intervals in milliseconds.
+    Detect R-peaks using NeuroKit2.
+    Returns array of sample indices for each R-peak.
     """
-    rr_intervals_sec = np.diff(rpeaks_indices) / sfreq
-    rr_intervals_ms = rr_intervals_sec * 1000.0
-    return rr_intervals_ms
+    import neurokit2 as nk
+    method_map = {
+        "NeuroKit": "neurokit",
+        "Pan-Tompkins": "pantompkins1985",
+        "Hamilton": "hamilton2002",
+        "Elgendi": "elgendi2010",
+        "Rodrigues": "rodrigues2021",
+    }
+    nk_method = method_map.get(method, "neurokit")
+    _, rpeaks_dict = nk.ecg_peaks(ecg_cleaned, sampling_rate=int(sfreq), method=nk_method)
+    rpeaks = rpeaks_dict['ECG_R_Peaks']
+    return rpeaks.astype(int)
+
+
+def get_rr_intervals(rpeaks: np.ndarray, sfreq: float) -> np.ndarray:
+    """Return RR intervals in milliseconds from R-peak sample indices."""
+    if len(rpeaks) < 2:
+        return np.array([])
+    rr_sec = np.diff(rpeaks.astype(float)) / sfreq
+    return rr_sec * 1000.0
+
+
+def compute_heart_rate(rpeaks: np.ndarray, sfreq: float) -> float:
+    """Compute mean heart rate in BPM."""
+    if len(rpeaks) < 2:
+        return 0.0
+    rr_ms = get_rr_intervals(rpeaks, sfreq)
+    return 60000.0 / np.mean(rr_ms) if np.mean(rr_ms) > 0 else 0.0
