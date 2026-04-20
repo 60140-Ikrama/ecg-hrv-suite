@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clinical Sentinel - Settings &amp; Pipeline</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#93000a",
+                    "primary-fixed": "#9cf0ff",
+                    "tertiary": "#ffe9cd",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab",
+                    "inverse-surface": "#e2e2e6",
+                    "outline-variant": "#3b494c",
+                    "on-primary": "#00363d",
+                    "on-secondary": "#283500",
+                    "surface-container-highest": "#333538",
+                    "secondary-fixed-dim": "#abd600",
+                    "on-tertiary-fixed-variant": "#604100",
+                    "surface": "#111316",
+                    "on-error": "#690005",
+                    "primary": "#c3f5ff",
+                    "background": "#111316",
+                    "primary-fixed-dim": "#00daf3",
+                    "surface-variant": "#333538",
+                    "on-surface-variant": "#bac9cc",
+                    "tertiary-container": "#ffc769",
+                    "on-primary-fixed-variant": "#004f58",
+                    "surface-container-high": "#282a2d",
+                    "outline": "#849396",
+                    "inverse-primary": "#006875",
+                    "on-background": "#e2e2e6",
+                    "tertiary-fixed": "#ffdeac",
+                    "on-tertiary": "#432c00",
+                    "on-primary-fixed": "#001f24",
+                    "secondary-fixed": "#c3f400",
+                    "inverse-on-surface": "#2f3034",
+                    "on-secondary-fixed": "#161e00",
+                    "on-secondary-fixed-variant": "#3c4d00",
+                    "surface-container-lowest": "#0c0e11",
+                    "surface-tint": "#00daf3",
+                    "on-primary-container": "#00626e",
+                    "surface-container-low": "#1a1c1f",
+                    "surface-bright": "#37393d",
+                    "on-tertiary-container": "#775200",
+                    "on-tertiary-fixed": "#281900",
+                    "secondary": "#ffffff",
+                    "on-surface": "#e2e2e6",
+                    "tertiary-fixed-dim": "#ffba38",
+                    "secondary-container": "#c3f400",
+                    "surface-container": "#1e2023",
+                    "surface-dim": "#111316",
+                    "primary-container": "#00e5ff",
+                    "on-secondary-container": "#556d00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        body {
+            background-color: #111316;
+            color: #e2e2e6;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-panel {
+            background: rgba(51, 53, 56, 0.6);
+            backdrop-filter: blur(20px);
+        }
+        .custom-slider::-webkit-slider-runnable-track {
+            background: #1a1c1f;
+            height: 4px;
+            border-radius: 2px;
+        }
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #c3f5ff;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(0, 218, 243, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="pb-24">
+<!-- TopAppBar -->
+<header class="bg-[#111316] docked full-width top-0 z-50 flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#c3f5ff]" style="font-size: 24px;">clinical_notes</span>
+<span class="font-['Manrope'] font-extrabold text-[#c3f5ff] tracking-tighter uppercase">Clinical Sentinel</span>
+</div>
+<div class="bg-[#1a1c1f] px-3 py-1 rounded text-[10px] font-['Inter'] font-bold text-[#c3f5ff] tracking-widest uppercase">
+            File: ACTIVE_ECG_01
+        </div>
+</header>
+<main class="px-6 py-8 max-w-md mx-auto">
+<div class="mb-8">
+<h1 class="font-['Manrope'] font-extrabold text-3xl text-primary tracking-tight mb-2">Pipeline Config</h1>
+<p class="text-on-surface-variant text-sm font-['Inter']">Adjust real-time telemetry processing parameters.</p>
+</div>
+<!-- Section: Acquisition -->
+<section class="space-y-6">
+<div class="bg-surface-container-low p-5 rounded-md space-y-5">
+<div class="flex justify-between items-center">
+<h2 class="text-secondary-fixed font-['Manrope'] font-bold text-xs uppercase tracking-[0.2em]">Signal Acquisition</h2>
+<span class="material-symbols-outlined text-secondary-fixed text-sm">sensors</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<label class="text-on-surface-variant text-[11px] font-bold uppercase tracking-wider">Sampling Freq</label>
+<span class="text-primary font-['Manrope'] font-extrabold text-xl">500 <span class="text-[10px] text-on-surface-variant">Hz</span></span>
+</div>
+<input class="w-full h-1 bg-surface-container-highest rounded-lg appearance-none cursor-pointer custom-slider" max="1000" min="100" type="range" value="500"/>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<label class="text-on-surface-variant text-[11px] font-bold uppercase tracking-wider">Filter Range</label>
+<span class="text-primary font-['Manrope'] font-extrabold text-xl">0.5 - 40 <span class="text-[10px] text-on-surface-variant">Hz</span></span>
+</div>
+<div class="relative h-1 bg-surface-container-highest rounded-lg">
+<div class="absolute left-1/4 right-1/4 h-full bg-primary-container rounded-lg"></div>
+<div class="absolute left-1/4 -top-1.5 w-4 h-4 bg-primary rounded-full shadow-[0_0_8px_rgba(0,218,243,0.4)]"></div>
+<div class="absolute right-1/4 -top-1.5 w-4 h-4 bg-primary rounded-full shadow-[0_0_8px_rgba(0,218,243,0.4)]"></div>
+</div>
+</div>
+</div>
+<!-- Section: Algorithm -->
+<div class="bg-surface-container-low p-5 rounded-md space-y-6">
+<div class="flex justify-between items-center">
+<h2 class="text-secondary-fixed font-['Manrope'] font-bold text-xs uppercase tracking-[0.2em]">R-Peak Detection</h2>
+<span class="material-symbols-outlined text-secondary-fixed text-sm">insights</span>
+</div>
+<div class="space-y-3">
+<label class="text-on-surface-variant text-[11px] font-bold uppercase tracking-wider">Detection Algorithm</label>
+<div class="grid grid-cols-2 gap-2 p-1 bg-surface-container rounded-md">
+<button class="bg-primary text-on-primary font-['Inter'] font-bold text-[11px] py-2 rounded-sm transition-all uppercase tracking-wide">Pan-Tompkins</button>
+<button class="text-on-surface-variant font-['Inter'] font-bold text-[11px] py-2 rounded-sm hover:bg-surface-container-high transition-all uppercase tracking-wide">Adaptive</button>
+</div>
+</div>
+<div class="flex items-center justify-between py-2">
+<div class="space-y-0.5">
+<label class="text-on-surface font-semibold text-sm">Ectopic Correction</label>
+<p class="text-[10px] text-on-surface-variant">Real-time anomaly suppression</p>
+</div>
+<button class="w-12 h-6 bg-primary-container rounded-full relative flex items-center px-1">
+<div class="w-4 h-4 bg-on-primary rounded-full translate-x-6 transition-transform"></div>
+</button>
+</div>
+<div class="space-y-3 border-t border-outline-variant/15 pt-4">
+<label class="text-on-surface-variant text-[11px] font-bold uppercase tracking-wider">Correction Method</label>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="w-4 h-4 rounded-full border-2 border-primary flex items-center justify-center p-0.5">
+<div class="w-full h-full bg-primary rounded-full"></div>
+</div>
+<span class="text-xs font-bold text-on-surface group-hover:text-primary transition-colors">Spline</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<div class="w-4 h-4 rounded-full border-2 border-outline-variant flex items-center justify-center p-0.5"></div>
+<span class="text-xs font-bold text-on-surface-variant group-hover:text-on-surface transition-colors">Linear</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Section: Interface -->
+<div class="bg-surface-container-low p-5 rounded-md space-y-5">
+<div class="flex justify-between items-center">
+<h2 class="text-secondary-fixed font-['Manrope'] font-bold text-xs uppercase tracking-[0.2em]">System Interface</h2>
+<span class="material-symbols-outlined text-secondary-fixed text-sm">display_settings</span>
+</div>
+<div class="space-y-3">
+<label class="text-on-surface-variant text-[11px] font-bold uppercase tracking-wider">Visual Theme</label>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface p-3 rounded border border-primary flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">dark_mode</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">Dark Mode</span>
+</div>
+<div class="bg-surface-container p-3 rounded border border-outline-variant/15 flex flex-col items-center gap-2 opacity-50">
+<span class="material-symbols-outlined text-on-surface-variant">light_mode</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Light Mode</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Dangerous Area -->
+<div class="px-5 py-4 border-t border-error-container/20 flex items-center justify-between">
+<div>
+<h3 class="text-error font-bold text-sm">Reset Pipeline</h3>
+<p class="text-[10px] text-on-surface-variant">Restore all factory calibration</p>
+</div>
+<button class="px-4 py-2 bg-error-container/20 text-error text-[10px] font-bold uppercase tracking-wider rounded border border-error/20 hover:bg-error-container/40 transition-colors">Reset</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-[#1a1c1f] shadow-[0_-4px_24px_rgba(0,218,243,0.05)] rounded-t-md">
+<div class="flex flex-col items-center justify-center text-[#bac9cc] px-4 py-1.5 hover:text-[#c3f5ff] transition-all">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#bac9cc] px-4 py-1.5 hover:text-[#c3f5ff] transition-all">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest mt-1">Analysis</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#bac9cc] px-4 py-1.5 hover:text-[#c3f5ff] transition-all">
+<span class="material-symbols-outlined" data-icon="compare_arrows">compare_arrows</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest mt-1">Compare</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#c3f5ff] text-[#00363d] rounded-md px-4 py-1.5">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest mt-1">Settings</span>
+</div>
+</nav>
+</body></html>

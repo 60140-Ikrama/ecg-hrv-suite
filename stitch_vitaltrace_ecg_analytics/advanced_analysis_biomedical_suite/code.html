@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BioPrecision Monitor | Advanced Analysis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#3a4d00",
+                    "on-surface": "#dbe4e8",
+                    "surface": "#0d1518",
+                    "tertiary-fixed": "#bef500",
+                    "primary-fixed-dim": "#00daf3",
+                    "on-primary-container": "#00e0f9",
+                    "surface-tint": "#00daf3",
+                    "outline": "#889393",
+                    "on-surface-variant": "#bec8c9",
+                    "outline-variant": "#3f4949",
+                    "surface-container-high": "#232b2e",
+                    "surface-bright": "#323a3e",
+                    "on-tertiary": "#273500",
+                    "on-background": "#dbe4e8",
+                    "inverse-primary": "#006875",
+                    "secondary": "#bbc8d0",
+                    "on-tertiary-fixed": "#151f00",
+                    "on-secondary": "#263238",
+                    "inverse-on-surface": "#2a3235",
+                    "tertiary-fixed-dim": "#a6d700",
+                    "primary": "#00daf3",
+                    "on-secondary-container": "#aab7bf",
+                    "on-primary-fixed-variant": "#004f58",
+                    "background": "#0d1518",
+                    "primary-fixed": "#9cf0ff",
+                    "surface-variant": "#2e3639",
+                    "on-secondary-fixed-variant": "#3c494f",
+                    "surface-dim": "#0d1518",
+                    "surface-container-lowest": "#070f12",
+                    "tertiary": "#a6d700",
+                    "primary-container": "#005f6b",
+                    "error": "#ffb4ab",
+                    "on-error": "#690005",
+                    "inverse-surface": "#dbe4e8",
+                    "error-container": "#93000a",
+                    "surface-container-low": "#151d20",
+                    "surface-container-highest": "#2e3639",
+                    "surface-container": "#192124",
+                    "on-primary-fixed": "#001f24",
+                    "secondary-fixed": "#d7e4ec",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-container": "#475e00",
+                    "on-primary": "#00363d",
+                    "secondary-container": "#3c494f",
+                    "secondary-fixed-dim": "#bbc8d0",
+                    "on-tertiary-container": "#abdd00",
+                    "on-secondary-fixed": "#111d23"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .poincare-grid {
+            background-image: radial-gradient(circle, #3f4949 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col bg-[#0d1518] border-r border-[#005f6b]/15 shadow-[4px_0_24px_rgba(0,0,0,0.5)] w-64 z-50">
+<div class="p-6">
+<div class="text-xl font-bold text-[#00daf3] tracking-tighter font-headline mb-1">Precision Bio</div>
+<div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-medium">Clinical Lens v1.0</div>
+</div>
+<nav class="flex-1 mt-4">
+<!-- Home -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 transition-colors font-headline text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span>Home</span>
+</a>
+<!-- ECG Analysis -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 transition-colors font-headline text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="ecg_heart">ecg_heart</span>
+<span>ECG Analysis</span>
+</a>
+<!-- HRV Analysis -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 transition-colors font-headline text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="vital_signs">vital_signs</span>
+<span>HRV Analysis</span>
+</a>
+<!-- Advanced Analysis (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-[#005f6b]/20 text-[#00daf3] border-r-4 border-[#00daf3] font-semibold font-headline text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>Advanced Analysis</span>
+</a>
+<!-- Reports -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 transition-colors font-headline text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Reports</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 transition-colors font-headline text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-lg font-headline text-xs font-bold uppercase tracking-widest hover:bg-primary-container/80 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Start New Scan
+            </button>
+<div class="flex items-center gap-3 mt-6 px-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-sm" data-icon="person">person</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Dr. Aris Thorne</p>
+<p class="text-[10px] text-slate-500">Chief Investigator</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 right-0 left-64 h-16 flex justify-between items-center px-8 z-40 bg-[#0d1518]/80 backdrop-blur-md border-b border-[#005f6b]/15">
+<div class="flex items-center gap-8">
+<span class="text-lg font-black text-[#00daf3] font-headline tracking-tighter">BioPrecision Monitor</span>
+<nav class="hidden md:flex gap-6">
+<a class="font-headline text-xs font-medium uppercase tracking-widest text-slate-400 hover:text-[#00daf3] transition-colors" href="#">Patient List</a>
+<a class="font-headline text-xs font-medium uppercase tracking-widest text-slate-400 hover:text-[#00daf3] transition-colors" href="#">Live Stream</a>
+<a class="font-headline text-xs font-medium uppercase tracking-widest text-slate-400 hover:text-[#00daf3] transition-colors" href="#">Lab Archive</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-slate-400">
+<span class="material-symbols-outlined hover:text-[#00daf3] cursor-pointer text-xl" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined hover:text-error cursor-pointer text-xl" data-icon="emergency">emergency</span>
+<span class="material-symbols-outlined hover:text-[#00daf3] cursor-pointer text-xl" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 min-h-screen bg-surface">
+<div class="p-8 max-w-[1600px] mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h1 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface mb-2">Non-Linear Dynamics</h1>
+<p class="text-on-surface-variant font-body">Subject 8824-A | Advanced HRV Poincaré Analysis</p>
+</div>
+<div class="flex gap-3">
+<div class="bg-surface-container-high px-4 py-2 rounded-xl border border-outline-variant flex items-center gap-3">
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Session Time</span>
+<span class="font-headline font-bold text-primary">04:12:30</span>
+</div>
+<div class="bg-surface-container-high px-4 py-2 rounded-xl border border-outline-variant flex items-center gap-3">
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Signal Quality</span>
+<span class="font-headline font-bold text-tertiary">98.4%</span>
+</div>
+</div>
+</div>
+<!-- Analysis Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Main Poincaré Plot (Bento Large) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-low rounded-2xl overflow-hidden shadow-2xl relative border border-outline-variant/10">
+<div class="absolute top-6 left-6 z-10">
+<h2 class="font-headline text-lg font-bold text-on-surface">Poincaré Plot <span class="text-primary-container ml-2">RR(n) vs RR(n+1)</span></h2>
+<p class="text-xs text-on-surface-variant font-label">Tactile Scatter Representation (N=1440)</p>
+</div>
+<div class="absolute top-6 right-6 z-10 flex gap-2">
+<button class="bg-surface-bright/50 hover:bg-surface-bright text-xs px-3 py-1 rounded-md border border-outline-variant transition-colors">Export Vector</button>
+<button class="bg-surface-bright/50 hover:bg-surface-bright text-xs px-3 py-1 rounded-md border border-outline-variant transition-colors">Normalize Axis</button>
+</div>
+<!-- The Plot Canvas Area -->
+<div class="h-[600px] w-full poincare-grid relative flex items-center justify-center p-12">
+<!-- Y-Axis Label -->
+<div class="absolute left-4 top-1/2 -rotate-90 origin-left text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">RR(n+1) Interval (ms)</div>
+<!-- X-Axis Label -->
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">RR(n) Interval (ms)</div>
+<!-- Data Visualization Area -->
+<div class="relative w-full h-full border-l border-b border-outline/30 flex items-center justify-center">
+<!-- Identity Line (RRn = RRn+1) -->
+<div class="absolute w-[140%] h-[1px] bg-outline-variant/40 rotate-45"></div>
+<!-- SD2 Major Axis Overlay (Ellipsoid) -->
+<div class="absolute w-[380px] h-[180px] border-2 border-primary/40 bg-primary/5 rounded-[100%] rotate-45 shadow-[0_0_40px_rgba(0,218,243,0.1)]"></div>
+<!-- SD1 Minor Axis Overlay -->
+<div class="absolute w-[180px] h-[180px] border-2 border-tertiary/40 bg-tertiary/5 rounded-full shadow-[0_0_40px_rgba(166,215,0,0.1)]"></div>
+<!-- Scatter Particles (Simulated Dots) -->
+<!-- Central Cluster -->
+<div class="absolute w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_#00daf3]" style="left: 45%; top: 45%;"></div>
+<div class="absolute w-1.5 h-1.5 rounded-full bg-primary/80" style="left: 47%; top: 43%;"></div>
+<div class="absolute w-1.5 h-1.5 rounded-full bg-primary/80" style="left: 43%; top: 47%;"></div>
+<div class="absolute w-1.5 h-1.5 rounded-full bg-primary/80" style="left: 50%; top: 50%;"></div>
+<!-- Dispersed Cluster -->
+<div class="absolute w-1 h-1 rounded-full bg-tertiary" style="left: 30%; top: 30%;"></div>
+<div class="absolute w-1 h-1 rounded-full bg-tertiary" style="left: 60%; top: 60%;"></div>
+<div class="absolute w-1 h-1 rounded-full bg-primary/40" style="left: 35%; top: 40%;"></div>
+<div class="absolute w-1 h-1 rounded-full bg-primary/40" style="left: 55%; top: 52%;"></div>
+<!-- Random Cloud -->
+<div class="absolute w-1 h-1 rounded-full bg-slate-500" style="left: 20%; top: 15%;"></div>
+<div class="absolute w-1 h-1 rounded-full bg-slate-500" style="left: 80%; top: 75%;"></div>
+<!-- The generated dots would be hundreds, simplified here for visual design -->
+<div class="absolute w-full h-full opacity-20 pointer-events-none">
+<div class="absolute w-1 h-1 bg-primary rounded-full" style="left: 48%; top: 46%;"></div>
+<div class="absolute w-1 h-1 bg-primary rounded-full" style="left: 51%; top: 49%;"></div>
+<div class="absolute w-1 h-1 bg-tertiary rounded-full" style="left: 44%; top: 44%;"></div>
+<div class="absolute w-1 h-1 bg-primary rounded-full" style="left: 53%; top: 45%;"></div>
+<div class="absolute w-1 h-1 bg-primary rounded-full" style="left: 42%; top: 52%;"></div>
+<div class="absolute w-1 h-1 bg-tertiary rounded-full" style="left: 46%; top: 50%;"></div>
+<div class="absolute w-1 h-1 bg-primary rounded-full" style="left: 49%; top: 44%;"></div>
+<div class="absolute w-1 h-1 bg-tertiary rounded-full" style="left: 54%; top: 56%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Metrics Sidebar (Bento Stack) -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<!-- SD1 Card -->
+<div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant/20 relative group hover:border-tertiary/50 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Standard Deviation 1</p>
+<h3 class="font-headline text-3xl font-black text-tertiary">SD1: 42.8 <span class="text-sm font-normal text-slate-500">ms</span></h3>
+</div>
+<span class="material-symbols-outlined text-tertiary bg-tertiary/10 p-2 rounded-lg" data-icon="query_stats">query_stats</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Reflects short-term variability, primarily sympathetic-vagal balance during spontaneous breathing cycles.</p>
+<div class="mt-4 pt-4 border-t border-outline-variant/30 flex gap-4">
+<div class="flex flex-col">
+<span class="text-[8px] uppercase text-slate-500">Stability</span>
+<span class="text-xs font-bold text-on-surface">OPTIMAL</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[8px] uppercase text-slate-500">Trend</span>
+<span class="text-xs font-bold text-tertiary">+12.4%</span>
+</div>
+</div>
+</div>
+<!-- SD2 Card -->
+<div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant/20 relative group hover:border-primary/50 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Standard Deviation 2</p>
+<h3 class="font-headline text-3xl font-black text-primary">SD2: 114.2 <span class="text-sm font-normal text-slate-500">ms</span></h3>
+</div>
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg" data-icon="monitoring">monitoring</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Reflects long-term variability and total power. Essential for detecting circadian rhythm disruption.</p>
+<div class="mt-4 pt-4 border-t border-outline-variant/30 flex gap-4">
+<div class="flex flex-col">
+<span class="text-[8px] uppercase text-slate-500">Elasticity</span>
+<span class="text-xs font-bold text-on-surface">NOMINAL</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[8px] uppercase text-slate-500">Baseline</span>
+<span class="text-xs font-bold text-primary">MATCHED</span>
+</div>
+</div>
+</div>
+<!-- Ratio & Non-Linear Summary -->
+<div class="flex-1 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 flex flex-col justify-center">
+<div class="mb-6">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">SD1/SD2 Ratio</span>
+<span class="text-xl font-headline font-bold text-on-surface">0.374</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="w-[37.4%] h-full bg-gradient-to-r from-primary to-tertiary"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-surface-variant/40 rounded-lg">
+<p class="text-[9px] text-slate-500 uppercase mb-1">Approx Entropy</p>
+<p class="text-lg font-bold font-headline">1.42</p>
+</div>
+<div class="p-3 bg-surface-variant/40 rounded-lg">
+<p class="text-[9px] text-slate-500 uppercase mb-1">Sample Entropy</p>
+<p class="text-lg font-bold font-headline">1.38</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Analysis Strip -->
+<div class="col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container p-5 rounded-2xl border border-outline-variant/20 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="waves">waves</span>
+</div>
+<div>
+<p class="text-[10px] uppercase font-bold text-slate-500">Spectral Peak (HF)</p>
+<p class="text-xl font-headline font-bold">0.24 <span class="text-xs text-slate-400 font-normal">Hz</span></p>
+</div>
+</div>
+<div class="bg-surface-container p-5 rounded-2xl border border-outline-variant/20 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+</div>
+<div>
+<p class="text-[10px] uppercase font-bold text-slate-500">RMSSD Baseline</p>
+<p class="text-xl font-headline font-bold">54.2 <span class="text-xs text-slate-400 font-normal">ms</span></p>
+</div>
+</div>
+<div class="bg-surface-container p-5 rounded-2xl border border-outline-variant/20 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-bright/50 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="timer">timer</span>
+</div>
+<div>
+<p class="text-[10px] uppercase font-bold text-slate-500">PNN50 Estimate</p>
+<p class="text-xl font-headline font-bold">32.8 <span class="text-xs text-slate-400 font-normal">%</span></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Legend (Glassmorphism) -->
+<div class="fixed bottom-8 right-8 bg-surface-container-highest/60 backdrop-blur-xl p-4 rounded-2xl border border-outline-variant/40 shadow-2xl z-50">
+<h4 class="text-[10px] uppercase tracking-tighter text-on-surface mb-3 font-bold">Plot Legend</h4>
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full border border-tertiary bg-tertiary/20"></span>
+<span class="text-xs text-on-surface-variant">SD1: Short-term variability</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full border border-primary bg-primary/20"></span>
+<span class="text-xs text-on-surface-variant">SD2: Long-term variability</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-[1px] bg-outline-variant rotate-45"></span>
+<span class="text-xs text-on-surface-variant">Identity Line</span>
+</div>
+</div>
+</div>
+</body></html>

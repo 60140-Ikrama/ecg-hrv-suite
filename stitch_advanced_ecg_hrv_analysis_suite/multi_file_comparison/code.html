@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clinical Sentinel - Multi-File Comparison</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#93000a",
+                        "primary-fixed": "#9cf0ff",
+                        "tertiary": "#ffe9cd",
+                        "on-error-container": "#ffdad6",
+                        "error": "#ffb4ab",
+                        "inverse-surface": "#e2e2e6",
+                        "outline-variant": "#3b494c",
+                        "on-primary": "#00363d",
+                        "on-secondary": "#283500",
+                        "surface-container-highest": "#333538",
+                        "secondary-fixed-dim": "#abd600",
+                        "on-tertiary-fixed-variant": "#604100",
+                        "surface": "#111316",
+                        "on-error": "#690005",
+                        "primary": "#c3f5ff",
+                        "background": "#111316",
+                        "primary-fixed-dim": "#00daf3",
+                        "surface-variant": "#333538",
+                        "on-surface-variant": "#bac9cc",
+                        "tertiary-container": "#ffc769",
+                        "on-primary-fixed-variant": "#004f58",
+                        "surface-container-high": "#282a2d",
+                        "outline": "#849396",
+                        "inverse-primary": "#006875",
+                        "on-background": "#e2e2e6",
+                        "tertiary-fixed": "#ffdeac",
+                        "on-tertiary": "#432c00",
+                        "on-primary-fixed": "#001f24",
+                        "secondary-fixed": "#c3f400",
+                        "inverse-on-surface": "#2f3034",
+                        "on-secondary-fixed": "#161e00",
+                        "on-secondary-fixed-variant": "#3c4d00",
+                        "surface-container-lowest": "#0c0e11",
+                        "surface-tint": "#00daf3",
+                        "on-primary-container": "#00626e",
+                        "surface-container-low": "#1a1c1f",
+                        "surface-bright": "#37393d",
+                        "on-tertiary-container": "#775200",
+                        "on-tertiary-fixed": "#281900",
+                        "secondary": "#ffffff",
+                        "on-surface": "#e2e2e6",
+                        "tertiary-fixed-dim": "#ffba38",
+                        "secondary-container": "#c3f400",
+                        "surface-container": "#1e2023",
+                        "surface-dim": "#111316",
+                        "primary-container": "#00e5ff",
+                        "on-secondary-container": "#556d00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .waveform-path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 0;
+        }
+        .glass-panel {
+            background: rgba(51, 53, 56, 0.6);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#111316] flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#c3f5ff]" data-icon="clinical_notes">clinical_notes</span>
+<h1 class="font-['Manrope'] font-extrabold text-[#c3f5ff] tracking-tighter uppercase">Clinical Sentinel</h1>
+</div>
+<div class="hidden md:block">
+<span class="font-['Manrope'] font-bold text-lg tracking-tight text-[#c3f5ff]">File: ACTIVE_ECG_01</span>
+</div>
+<div class="md:hidden">
+<span class="text-[#c3f5ff] text-xs font-bold font-['Inter'] uppercase tracking-widest">Comparison</span>
+</div>
+</header>
+<main class="pt-20 px-4 space-y-6">
+<!-- File Selector Section -->
+<section class="bg-surface-container-low p-4 rounded-md">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline font-bold text-sm uppercase tracking-widest text-on-surface-variant">Data Sources</h2>
+<span class="bg-primary-container text-on-primary text-[10px] px-2 py-0.5 rounded-sm font-bold uppercase">3 Active</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3 bg-surface-container p-3 rounded-md outline-variant/15 outline outline-1">
+<span class="material-symbols-outlined text-primary" data-icon="file_open">file_open</span>
+<div class="flex-1">
+<p class="text-xs font-semibold text-primary">REC_2023_09_A</p>
+<p class="text-[10px] text-on-surface-variant">Baseline Profile • 14:20:01</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+<div class="flex items-center gap-3 bg-surface-container p-3 rounded-md outline-variant/15 outline outline-1">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="file_open">file_open</span>
+<div class="flex-1">
+<p class="text-xs font-semibold text-secondary-fixed">REC_2023_09_B</p>
+<p class="text-[10px] text-on-surface-variant">Post-Exertion • 16:45:12</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+<div class="flex items-center gap-3 bg-surface-container p-3 rounded-md outline-variant/15 outline outline-1">
+<span class="material-symbols-outlined text-tertiary-fixed-dim" data-icon="file_open">file_open</span>
+<div class="flex-1">
+<p class="text-xs font-semibold text-tertiary-fixed-dim">REC_2023_09_C</p>
+<p class="text-[10px] text-on-surface-variant">Recovery Phase • 18:10:44</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</section>
+<!-- Overlaid PSD Plot (Glassmorphism) -->
+<section class="space-y-4">
+<h2 class="font-headline font-bold text-lg text-primary tracking-tight px-1">PSD Spectral Overlay</h2>
+<div class="glass-panel p-4 rounded-md aspect-video relative overflow-hidden border border-outline-variant/10">
+<!-- Mock Chart Grid -->
+<div class="absolute inset-0 grid grid-cols-6 grid-rows-4 opacity-10 pointer-events-none">
+<div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-b border-outline-variant"></div>
+<div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-b border-outline-variant"></div>
+<div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-r border-b border-outline-variant"></div><div class="border-b border-outline-variant"></div>
+<div class="border-r border-outline-variant"></div><div class="border-r border-outline-variant"></div><div class="border-r border-outline-variant"></div><div class="border-r border-outline-variant"></div><div class="border-r border-outline-variant"></div><div></div>
+</div>
+<!-- Spectral Curves -->
+<svg class="absolute inset-0 w-full h-full p-4" viewbox="0 0 400 200">
+<!-- Curve A (Primary) -->
+<path class="opacity-80" d="M0 180 Q 50 170 80 120 T 150 140 T 250 160 T 400 175" fill="none" stroke="#c3f5ff" stroke-width="2"></path>
+<!-- Curve B (Secondary) -->
+<path class="opacity-80" d="M0 185 Q 60 150 100 80 T 180 130 T 280 170 T 400 180" fill="none" stroke="#c3f400" stroke-width="2"></path>
+<!-- Curve C (Tertiary) -->
+<path class="opacity-80" d="M0 190 Q 70 160 120 100 T 200 150 T 300 180 T 400 185" fill="none" stroke="#ffba38" stroke-width="2"></path>
+</svg>
+<!-- Legend -->
+<div class="absolute bottom-4 left-4 flex gap-4">
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="text-[10px] font-bold uppercase text-primary">VLF</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-secondary-fixed"></div>
+<span class="text-[10px] font-bold uppercase text-secondary-fixed">LF</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></div>
+<span class="text-[10px] font-bold uppercase text-tertiary-fixed-dim">HF</span>
+</div>
+</div>
+</div>
+</section>
+<!-- HRV Metrics Comparison Table -->
+<section class="bg-surface-container-low rounded-md overflow-hidden">
+<div class="p-4 bg-surface-container-high flex justify-between items-center">
+<h3 class="font-headline font-bold text-sm uppercase tracking-widest">HRV Cross-Analysis</h3>
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="info">info</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/10">
+<th class="p-4 text-[10px] font-bold uppercase text-on-surface-variant tracking-wider">Metric</th>
+<th class="p-4 text-[10px] font-bold uppercase text-primary tracking-wider text-center">REC_A</th>
+<th class="p-4 text-[10px] font-bold uppercase text-secondary-fixed tracking-wider text-center">REC_B</th>
+<th class="p-4 text-[10px] font-bold uppercase text-tertiary-fixed-dim tracking-wider text-center">REC_C</th>
+</tr>
+</thead>
+<tbody class="text-xs font-medium">
+<tr class="border-b border-outline-variant/5">
+<td class="p-4 text-on-surface-variant">SDNN (ms)</td>
+<td class="p-4 text-center font-headline text-on-surface">54.2</td>
+<td class="p-4 text-center font-headline text-on-surface">32.8</td>
+<td class="p-4 text-center font-headline text-on-surface">48.1</td>
+</tr>
+<tr class="border-b border-outline-variant/5">
+<td class="p-4 text-on-surface-variant">RMSSD (ms)</td>
+<td class="p-4 text-center font-headline text-on-surface">42.1</td>
+<td class="p-4 text-center font-headline text-on-surface">18.5</td>
+<td class="p-4 text-center font-headline text-on-surface">36.7</td>
+</tr>
+<tr class="border-b border-outline-variant/5">
+<td class="p-4 text-on-surface-variant">LF/HF Ratio</td>
+<td class="p-4 text-center font-headline text-on-surface">1.2</td>
+<td class="p-4 text-center font-headline text-on-surface">3.8</td>
+<td class="p-4 text-center font-headline text-on-surface">1.5</td>
+</tr>
+<tr>
+<td class="p-4 text-on-surface-variant">Stress Score</td>
+<td class="p-4 text-center">
+<span class="bg-secondary-fixed/10 text-secondary-fixed px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase">Optimal</span>
+</td>
+<td class="p-4 text-center">
+<span class="bg-error-container text-on-error-container px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase">High</span>
+</td>
+<td class="p-4 text-center">
+<span class="bg-tertiary-container/20 text-tertiary-fixed-dim px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase">Moderate</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Waveform Snapshots -->
+<section class="grid grid-cols-1 gap-4">
+<div class="bg-surface-container-low p-4 rounded-md">
+<div class="flex justify-between items-end mb-2">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">ECG Segment • REC_A</p>
+<p class="text-xs font-bold text-primary">72 BPM</p>
+</div>
+<div class="h-16 relative">
+<svg class="w-full h-full" viewbox="0 0 300 60">
+<path d="M0 30 L40 30 L45 10 L50 50 L55 30 L100 30 L105 10 L110 50 L115 30 L160 30 L165 10 L170 50 L175 30 L220 30 L225 10 L230 50 L235 30 L300 30" fill="none" stroke="#c3f5ff" stroke-linecap="round" stroke-width="1.5"></path>
+</svg>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-md">
+<div class="flex justify-between items-end mb-2">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">ECG Segment • REC_B</p>
+<p class="text-xs font-bold text-secondary-fixed">104 BPM</p>
+</div>
+<div class="h-16 relative">
+<svg class="w-full h-full" viewbox="0 0 300 60">
+<path d="M0 30 L25 30 L30 10 L35 50 L40 30 L65 30 L70 10 L75 50 L80 30 L105 30 L110 10 L115 50 L120 30 L145 30 L150 10 L155 50 L160 30 L185 30 L190 10 L195 50 L200 30 L225 30 L230 10 L235 50 L240 30" fill="none" stroke="#c3f400" stroke-linecap="round" stroke-width="1.5"></path>
+</svg>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-[#1a1c1f] shadow-[0_-4px_24px_rgba(0,218,243,0.05)] rounded-t-md">
+<a class="flex flex-col items-center justify-center text-[#bac9cc] px-4 py-1.5 transition-all hover:text-[#c3f5ff]" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#bac9cc] px-4 py-1.5 transition-all hover:text-[#c3f5ff]" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="monitoring">monitoring</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest">Analysis</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#c3f5ff] text-[#00363d] rounded-md px-4 py-1.5 scale-95 transition-all" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="compare_arrows">compare_arrows</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest">Compare</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#bac9cc] px-4 py-1.5 transition-all hover:text-[#c3f5ff]" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="settings">settings</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-widest">Settings</span>
+</a>
+</nav>
+</body></html>
