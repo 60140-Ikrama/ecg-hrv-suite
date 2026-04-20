@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ECG Sentinel | Preprocessing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container": "#1e2023",
+                      "secondary": "#ffffff",
+                      "on-surface": "#e2e2e6",
+                      "surface-variant": "#333538",
+                      "surface-dim": "#111316",
+                      "surface-container-lowest": "#0c0e11",
+                      "surface-container-high": "#282a2d",
+                      "on-tertiary-fixed": "#281900",
+                      "tertiary-container": "#ffc769",
+                      "surface-bright": "#37393d",
+                      "secondary-fixed-dim": "#abd600",
+                      "outline": "#849396",
+                      "surface": "#111316",
+                      "outline-variant": "#3b494c",
+                      "surface-tint": "#00daf3",
+                      "on-tertiary-fixed-variant": "#604100",
+                      "on-primary": "#00363d",
+                      "inverse-surface": "#e2e2e6",
+                      "on-secondary-fixed-variant": "#3c4d00",
+                      "on-secondary-container": "#556d00",
+                      "on-primary-fixed": "#001f24",
+                      "on-secondary-fixed": "#161e00",
+                      "primary": "#c3f5ff",
+                      "tertiary-fixed-dim": "#ffba38",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-highest": "#333538",
+                      "on-surface-variant": "#bac9cc",
+                      "primary-fixed": "#9cf0ff",
+                      "on-tertiary-container": "#775200",
+                      "on-primary-fixed-variant": "#004f58",
+                      "on-background": "#e2e2e6",
+                      "error-container": "#93000a",
+                      "on-secondary": "#283500",
+                      "inverse-on-surface": "#2f3034",
+                      "tertiary": "#ffe9cd",
+                      "background": "#111316",
+                      "on-tertiary": "#432c00",
+                      "on-primary-container": "#00626e",
+                      "on-error": "#690005",
+                      "primary-container": "#00e5ff",
+                      "primary-fixed-dim": "#00daf3",
+                      "inverse-primary": "#006875",
+                      "secondary-container": "#c3f400",
+                      "error": "#ffb4ab",
+                      "surface-container-low": "#1a1c1f",
+                      "secondary-fixed": "#c3f400",
+                      "tertiary-fixed": "#ffdeac"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {},
+              "fontFamily": {
+                      "headline": [
+                              "Manrope"
+                      ],
+                      "body": [
+                              "Inter"
+                      ],
+                      "label": [
+                              "Inter"
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-[#111316] dark:bg-[#111316] flex items-center justify-between px-6 py-4 w-full docked full-width top-0 shadow-[0_8px_32px_rgba(0,218,243,0.08)] z-40 hidden md:flex border-b border-transparent">
+<div class="flex items-center gap-4">
+<img alt="User Clinician Avatar" class="w-10 h-10 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARaMb3PRNKxmrxObXx-gygwNi6aT4iovfXMQGzqPtjOqQoVgqkimtWeUl3dNCnkTKerBPSZkOUtFaJv2wzT9MCNNUlovWC55cBzFcyM00iQe-m8YybbJr2nUY6NmcA0JukBxDzQFNMdxoSLaUv18sFl5-RkmkhnjqvdkmT2EUcTKaCgVZJk0m2EiJDNGg-EXK0_x-NI968HC2oiS5poX5YWBlR5ndpikAu2A2zqYSQqAMB8spnZANz_C77KA9qezEycpl-o3ebHVk"/>
+<h1 class="font-['Manrope'] font-extrabold text-[#c3f5ff] tracking-widest uppercase">ECG Sentinel | Session Alpha-09</h1>
+</div>
+<!-- Desktop Nav Cluster integrated into TopAppBar -->
+<nav class="flex items-center gap-6">
+<a class="text-[#bac9cc] hover:bg-[#37393d] transition-colors px-3 py-2 rounded-DEFAULT font-label text-sm" href="#">Input</a>
+<a class="text-[#c3f5ff] border-b-2 border-[#00e5ff] hover:bg-[#37393d] transition-colors px-3 py-2 rounded-DEFAULT font-label text-sm opacity-80 scale-95" href="#">Preprocessing</a>
+<a class="text-[#bac9cc] hover:bg-[#37393d] transition-colors px-3 py-2 rounded-DEFAULT font-label text-sm" href="#">Analysis</a>
+<a class="text-[#bac9cc] hover:bg-[#37393d] transition-colors px-3 py-2 rounded-DEFAULT font-label text-sm" href="#">Comparison</a>
+<a class="text-[#bac9cc] hover:bg-[#37393d] transition-colors px-3 py-2 rounded-DEFAULT font-label text-sm" href="#">Reports</a>
+</nav>
+<button class="text-[#c3f5ff] hover:bg-[#37393d] transition-colors p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">settings_input_component</span>
+</button>
+</header>
+<!-- Mobile Top Header (Fallback) -->
+<header class="md:hidden flex items-center justify-between px-4 py-3 bg-surface shadow-sm z-40">
+<h1 class="font-headline font-bold text-primary tracking-tight text-lg">ECG Sentinel</h1>
+<span class="material-symbols-outlined text-primary">settings_input_component</span>
+</header>
+<!-- Main Canvas -->
+<main class="flex-grow p-4 md:p-8 flex flex-col gap-6 md:gap-8 pb-24 md:pb-8">
+<!-- Dashboard Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline font-bold text-3xl md:text-4xl text-on-surface tracking-tight">Signal Conditioning</h2>
+<p class="font-body text-on-surface-variant text-sm md:text-base mt-1">Applying real-time filtering algorithms to raw lead data.</p>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-lg">
+<span class="font-label text-xs uppercase text-on-surface-variant tracking-wider">Overall SQI</span>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-sm bg-secondary-fixed"></div>
+<span class="font-body font-bold text-secondary-fixed text-lg">94%</span>
+</div>
+</div>
+</div>
+<!-- Layout Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- Left Column: Waveforms (8 cols) -->
+<div class="lg:col-span-8 flex flex-col gap-6">
+<!-- Raw Signal Container -->
+<section class="bg-surface-container-low rounded-lg p-5 flex flex-col relative overflow-hidden group">
+<!-- Header -->
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">monitor_heart</span>
+<h3 class="font-body font-semibold text-on-surface text-sm">Raw Input Signal (Lead II)</h3>
+</div>
+<span class="font-label text-xs text-on-surface-variant bg-surface px-2 py-1 rounded-DEFAULT">250 Hz</span>
+</div>
+<!-- Waveform Canvas Mock -->
+<div class="h-48 w-full bg-surface relative rounded-DEFAULT border border-outline-variant/15 flex items-center justify-center overflow-hidden">
+<!-- Grid Lines -->
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#3b494c1a_1px,transparent_1px),linear-gradient(to_bottom,#3b494c1a_1px,transparent_1px)] bg-[size:10px_10px]"></div>
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#3b494c33_1px,transparent_1px),linear-gradient(to_bottom,#3b494c33_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+<!-- Simulated Raw ECG Line (Noisy) -->
+<svg class="absolute inset-0 h-full w-full opacity-60" preserveaspectratio="none" viewbox="0 0 1000 100">
+<path d="M0,50 Q10,40 20,50 T40,60 T60,45 T80,55 T90,40 L95,20 L100,80 L105,45 T120,55 T140,45 T160,50 T180,55 T200,45 T220,60 T240,40 T260,50 T280,55 T290,45 L295,15 L300,85 L305,50 T320,55 T340,40 T360,55 T380,45 T400,60 T420,40 T440,55 T460,45 T480,50 T490,40 L495,25 L500,75 L505,45 T520,55 T540,40 T560,55 T580,45 T600,60 T620,40 T640,55 T660,45 T680,50 T690,40 L695,10 L700,90 L705,50 T720,55 T740,40 T760,55 T780,45 T800,60 T820,40 T840,55 T860,45 T880,50 T890,40 L895,20 L900,80 L905,45 T920,55 T940,40 T960,55 T980,45 T1000,50" fill="none" stroke="#e2e2e6" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+</svg>
+</div>
+</section>
+<!-- Filtered Signal Container -->
+<section class="bg-surface-container-low rounded-lg p-5 flex flex-col relative overflow-hidden group">
+<!-- Header -->
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-fixed text-lg">healing</span>
+<h3 class="font-body font-semibold text-on-surface text-sm">Filtered Output Signal</h3>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label text-xs text-primary bg-surface px-2 py-1 rounded-DEFAULT">Sync: Active</span>
+<span class="font-label text-xs text-on-surface-variant bg-surface px-2 py-1 rounded-DEFAULT">0.5-40Hz BPF</span>
+</div>
+</div>
+<!-- Waveform Canvas Mock -->
+<div class="h-48 w-full bg-surface relative rounded-DEFAULT border border-outline-variant/15 flex items-center justify-center overflow-hidden">
+<!-- Glass Overlay for premium feel -->
+<div class="absolute inset-0 bg-surface-container-highest/20 backdrop-blur-[2px] pointer-events-none z-10"></div>
+<!-- Grid Lines -->
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#3b494c1a_1px,transparent_1px),linear-gradient(to_bottom,#3b494c1a_1px,transparent_1px)] bg-[size:10px_10px]"></div>
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#3b494c33_1px,transparent_1px),linear-gradient(to_bottom,#3b494c33_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+<!-- Simulated Clean ECG Line -->
+<svg class="absolute inset-0 h-full w-full z-20" preserveaspectratio="none" viewbox="0 0 1000 100">
+<path d="M0,50 Q10,50 20,50 C30,50 35,45 40,45 C45,45 50,50 60,50 L85,50 C90,50 92,40 95,25 L100,85 C102,90 103,55 105,50 C110,50 115,55 120,55 C130,55 140,50 160,50 L180,50 C190,50 200,50 220,50 C230,50 235,45 240,45 C245,45 250,50 260,50 L285,50 C290,50 292,40 295,20 L300,90 C302,95 303,55 305,50 C310,50 315,55 320,55 C330,55 340,50 360,50 L380,50 C390,50 400,50 420,50 C430,50 435,45 440,45 C245,45 450,50 460,50 L485,50 C490,50 492,40 495,25 L500,85 C502,90 503,55 505,50 C510,50 515,55 520,55 C530,55 540,50 560,50 L580,50 C590,50 600,50 620,50 C630,50 635,45 640,45 C645,45 650,50 660,50 L685,50 C690,50 692,40 695,15 L700,95 C702,100 703,55 705,50 C710,50 715,55 720,55 C730,55 740,50 760,50 L780,50 C790,50 800,50 820,50 C830,50 835,45 840,45 C845,45 850,50 860,50 L885,50 C890,50 892,40 895,25 L900,85 C902,90 903,55 905,50 C910,50 915,55 920,55 C930,55 940,50 960,50 L980,50 L1000,50" fill="none" stroke="#c3f400" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+</svg>
+<!-- Hover Tooltip Hint -->
+<div class="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-outline text-xs">mouse</span>
+<span class="font-label text-[10px] text-outline uppercase tracking-wider">Drag to inspect</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Control Panel (4 cols) -->
+<aside class="lg:col-span-4 flex flex-col gap-4">
+<div class="bg-surface-container-low rounded-lg p-5 flex flex-col h-full">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary text-xl">tune</span>
+<h3 class="font-headline font-bold text-on-surface text-lg">Filter Configuration</h3>
+</div>
+<!-- Filter Options -->
+<div class="flex flex-col gap-6">
+<!-- Bandpass Filter Slider -->
+<div class="flex flex-col gap-3 pb-4 border-b border-outline-variant/20">
+<div class="flex justify-between items-end">
+<label class="font-label font-semibold text-sm text-on-surface">Bandpass Filter</label>
+<span class="font-body text-xs text-primary bg-surface px-2 py-0.5 rounded-DEFAULT">0.5 Hz - 40 Hz</span>
+</div>
+<!-- Mock Range Slider -->
+<div class="relative h-6 flex items-center">
+<div class="absolute w-full h-1 bg-surface rounded-full"></div>
+<div class="absolute left-[5%] right-[60%] h-1 bg-gradient-to-r from-primary to-primary-container rounded-full"></div>
+<div class="absolute left-[5%] w-3 h-3 bg-primary-container rounded-full shadow-[0_0_8px_rgba(0,229,255,0.6)] cursor-pointer -ml-1.5 border-2 border-surface"></div>
+<div class="absolute right-[60%] w-3 h-3 bg-primary-container rounded-full shadow-[0_0_8px_rgba(0,229,255,0.6)] cursor-pointer -mr-1.5 border-2 border-surface"></div>
+</div>
+<div class="flex justify-between text-[10px] font-label text-outline uppercase tracking-widest mt-1">
+<span>0.05</span>
+<span>150</span>
+</div>
+</div>
+<!-- Baseline Wander Toggle -->
+<div class="flex items-center justify-between pb-4 border-b border-outline-variant/20">
+<div class="flex flex-col">
+<span class="font-label font-semibold text-sm text-on-surface">Baseline Wander Removal</span>
+<span class="font-body text-xs text-on-surface-variant">Spline interpolation method</span>
+</div>
+<!-- Mock Toggle Switch Active -->
+<div class="w-10 h-5 bg-primary-fixed-dim rounded-full relative cursor-pointer shadow-[0_0_10px_rgba(0,218,243,0.2)]">
+<div class="absolute right-1 top-1 w-3 h-3 bg-surface-dim rounded-full"></div>
+</div>
+</div>
+<!-- Noise Suppression Select -->
+<div class="flex flex-col gap-2 pb-4 border-b border-outline-variant/20">
+<label class="font-label font-semibold text-sm text-on-surface">Noise Suppression (Notch)</label>
+<div class="flex gap-2">
+<button class="flex-1 py-1.5 bg-surface text-on-surface-variant text-xs font-label rounded-DEFAULT border border-outline-variant/30 hover:bg-surface-bright transition-colors">Off</button>
+<button class="flex-1 py-1.5 bg-surface-bright text-primary text-xs font-label rounded-DEFAULT border border-primary/30 shadow-[0_0_8px_rgba(195,245,255,0.1)]">50 Hz</button>
+<button class="flex-1 py-1.5 bg-surface text-on-surface-variant text-xs font-label rounded-DEFAULT border border-outline-variant/30 hover:bg-surface-bright transition-colors">60 Hz</button>
+</div>
+</div>
+<!-- SQI Status -->
+<div class="bg-surface rounded-lg p-3 flex flex-col gap-2 mt-2 border border-outline-variant/10">
+<div class="flex justify-between items-center">
+<span class="font-label text-xs uppercase tracking-wider text-on-surface-variant">Signal Quality Index</span>
+<span class="material-symbols-outlined text-secondary-fixed text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-headline font-bold text-2xl text-on-surface">Excellent</span>
+<span class="font-body text-xs text-outline mb-1">Low artifact interference</span>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-6">
+<button class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-label font-bold rounded-md hover:opacity-90 transition-opacity flex justify-center items-center gap-2">
+<span class="material-symbols-outlined text-lg">memory</span>
+                            Apply Filter Settings
+                        </button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-2 pb-safe bg-[#1a1c1f]/90 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] md:hidden rounded-t-lg">
+<a class="flex flex-col items-center justify-center text-[#bac9cc] opacity-60 hover:opacity-100 hover:text-[#c3f5ff] transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">upload_file</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-tighter">Input</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#00363d] bg-gradient-to-tr from-[#c3f5ff] to-[#00e5ff] rounded-md px-3 py-1 shadow-[0_0_15px_rgba(0,229,255,0.4)] scale-90 duration-150" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">tune</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-tighter">Preprocessing</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#bac9cc] opacity-60 hover:opacity-100 hover:text-[#c3f5ff] transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">show_chart</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-tighter">Analysis</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#bac9cc] opacity-60 hover:opacity-100 hover:text-[#c3f5ff] transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">compare_arrows</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-tighter">Comparison</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#bac9cc] opacity-60 hover:opacity-100 hover:text-[#c3f5ff] transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">description</span>
+<span class="font-['Inter'] text-[10px] font-semibold uppercase tracking-tighter">Reports</span>
+</a>
+</nav>
+</body></html>
