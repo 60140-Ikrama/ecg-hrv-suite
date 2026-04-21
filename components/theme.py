@@ -252,7 +252,17 @@ section[data-testid="stSidebar"] {
     background: #0c0e11 !important;
     border-right: 1px solid #1e2023;
 }
-section[data-testid="stSidebar"] * { font-family: 'Inter', sans-serif !important; }
+/* Apply font ONLY to text nodes — exclude svg/path to avoid breaking arrow icons */
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] input,
+section[data-testid="stSidebar"] select,
+section[data-testid="stSidebar"] textarea,
+section[data-testid="stSidebar"] button { font-family: 'Inter', sans-serif !important; }
+/* Ensure SVG arrows render correctly — do NOT touch font-family */
+section[data-testid="stSidebar"] svg,
+section[data-testid="stSidebar"] svg * { font-family: initial !important; }
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3 {
@@ -275,12 +285,25 @@ div[data-testid="stExpander"] {
     border-radius: 0.375rem !important;
 }
 div[data-testid="stExpander"] summary {
+    color: #c3f5ff !important;
+    list-style: none !important;
+}
+/* Target only the text label inside the summary — not the SVG arrow */
+div[data-testid="stExpander"] summary > div > p,
+div[data-testid="stExpander"] summary span:not([data-testid]) {
     font-family: 'Manrope', sans-serif !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
     color: #c3f5ff !important;
     text-transform: uppercase;
     letter-spacing: 0.06em;
+}
+/* Prevent SVG arrow from inheriting font overrides */
+div[data-testid="stExpander"] summary svg,
+div[data-testid="stExpander"] summary svg * {
+    font-family: initial !important;
+    display: inline-block !important;
+    visibility: visible !important;
 }
 .stAlert { border-radius: 0.375rem !important; }
 
