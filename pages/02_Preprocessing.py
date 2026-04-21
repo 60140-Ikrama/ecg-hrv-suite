@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import sys, os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from components.theme import inject_stitch_theme, sentinel_header, pipeline_status_bar, COLORS, PLOTLY_LAYOUT
+from components.theme import inject_stitch_theme, sentinel_header, pipeline_status_bar, COLORS, PLOTLY_LAYOUT, get_plot_layout
 from components.sidebar_settings import render_sidebar_settings
 from utils.signal_processing import preprocess_ecg
 
@@ -79,7 +79,7 @@ def main():
         line=dict(color=COLORS["secondary_fixed"], width=1.8),
         hovertemplate="t=%{x:.3f}s<br>Filtered=%{y:.4f}<extra>Filtered</extra>"
     ))
-    layout = {**PLOTLY_LAYOUT}
+    layout = get_plot_layout()
     layout["title"] = dict(text="Raw vs Filtered ECG", font=dict(family="Manrope", color=COLORS["primary"], size=13))
     layout["xaxis"]["title"] = "Time (s)"
     layout["yaxis"]["title"] = "Amplitude"

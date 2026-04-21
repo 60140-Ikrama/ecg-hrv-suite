@@ -2,6 +2,7 @@
 Stitch Design System: CSS injection and shared UI components.
 Applies Clinical Sentinel theme tokens to Streamlit.
 """
+import copy
 import streamlit as st
 
 # === STITCH DESIGN TOKENS ===
@@ -404,6 +405,17 @@ def kpi_card(label: str, value: str, unit: str = "", accent: str = "primary", ba
         {bar_html}
     </div>
     """
+
+
+def get_plot_layout(**overrides) -> dict:
+    """
+    Return a deep copy of PLOTLY_LAYOUT, optionally merged with overrides.
+    Use this instead of `{**PLOTLY_LAYOUT}` to avoid shared nested-dict mutation.
+    """
+    layout = copy.deepcopy(PLOTLY_LAYOUT)
+    for k, v in overrides.items():
+        layout[k] = v
+    return layout
 
 
 def section_header(title: str):
