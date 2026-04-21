@@ -1,8 +1,0 @@
-streamlit>=1.30
-pandas
-numpy
-scipy
-plotly
-neurokit2
-PyWavelets
-mne
