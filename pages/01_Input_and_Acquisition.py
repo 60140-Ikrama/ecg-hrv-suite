@@ -81,6 +81,42 @@ def main():
             prog.progress((i + 1) / len(uploaded), text=f"Loaded {i+1}/{len(uploaded)}")
         prog.empty()
 
+    # ── Download from URL ────────────────────────────────────────────────────
+    st.markdown('<div class="section-header" style="margin-top:1rem;">Download from URL</div>',
+                unsafe_allow_html=True)
+    with st.form("url_download_form"):
+        col_url, col_btn = st.columns([4, 1])
+        with col_url:
+            url_input = st.text_input("URL", placeholder="https://physionet.org/.../data.csv", label_visibility="collapsed")
+        with col_btn:
+            submit_url = st.form_submit_button("Download", use_container_width=True)
+            
+        if submit_url and url_input:
+            import requests, io
+            with st.spinner("Downloading file..."):
+                try:
+                    resp = requests.get(url_input, timeout=15)
+                    resp.raise_for_status()
+                    filename = url_input.split("/")[-1]
+                    if not filename or "." not in filename:
+                        filename = "downloaded_ecg.csv"
+                    
+                    class DummyURLFile:
+                        name = filename
+                        def read(self): return resp.content
+                    
+                    sig_arr, det_fs, info = load_ecg_file(DummyURLFile())
+                    if sig_arr is not None:
+                        st.session_state["raw_signals"][filename] = sig_arr
+                        if det_fs and st.session_state.get("auto_sfreq"):
+                            st.session_state["sfreq"] = det_fs
+                        sfreq = st.session_state.get("sfreq", 250.0)
+                        st.session_state["sqi_cache"][filename] = compute_sqi(sig_arr, sfreq)
+                        st.session_state["active_file"] = filename
+                        st.success(f"✅ {filename} ({len(sig_arr):,} samples)", icon="📡")
+                except Exception as e:
+                    st.error(f"❌ Download failed: {e}")
+
     raw = st.session_state.get("raw_signals", {})
     if not raw:
         st.markdown("""
