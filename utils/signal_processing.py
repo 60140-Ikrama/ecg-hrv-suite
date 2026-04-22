@@ -88,13 +88,14 @@ def compute_sqi(signal: np.ndarray, sfreq: float) -> dict:
     nperseg = min(256, max(4, len(signal) // 2))
     f, psd = sig.welch(signal, fs=sfreq, nperseg=nperseg)
 
-    total_power = float(np.trapz(psd, f)) if len(psd) > 1 else 1.0
+    _trapz = getattr(np, 'trapezoid', getattr(np, 'trapz', None))
+    total_power = float(_trapz(psd, f)) if len(psd) > 1 else 1.0
     if total_power <= 0:
         total_power = 1.0
 
     # 1. Spectral SQI — QRS energy fraction
     qrs_mask = (f >= 5) & (f <= 20)
-    qrs_power = float(np.trapz(psd[qrs_mask], f[qrs_mask])) if np.sum(qrs_mask) > 1 else 0.0
+    qrs_power = float(_trapz(psd[qrs_mask], f[qrs_mask])) if np.sum(qrs_mask) > 1 else 0.0
     spectral_sqi = float(np.clip(qrs_power / total_power * 100, 0, 100))
 
     # 2. Kurtosis SQI — sharp QRS peaks increase kurtosis
