@@ -252,17 +252,19 @@ section[data-testid="stSidebar"] {
     background: #0c0e11 !important;
     border-right: 1px solid #1e2023;
 }
-/* Apply font ONLY to text nodes — exclude svg/path to avoid breaking arrow icons */
-section[data-testid="stSidebar"] p,
-section[data-testid="stSidebar"] span,
-section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] input,
-section[data-testid="stSidebar"] select,
-section[data-testid="stSidebar"] textarea,
-section[data-testid="stSidebar"] button { font-family: 'Inter', sans-serif !important; }
-/* Ensure SVG arrows render correctly — do NOT touch font-family */
-section[data-testid="stSidebar"] svg,
-section[data-testid="stSidebar"] svg * { font-family: initial !important; }
+/* Ensure Material Symbols render correctly — do NOT override their font */
+.material-symbols-rounded,
+.material-symbols-outlined,
+[class*="material-symbols"],
+section[data-testid="stSidebar"] span[class*="material"] { 
+    font-family: "Material Symbols Rounded" !important; 
+}
+
+/* Base font for sidebar text (avoids global span overrides that break ligatures) */
+section[data-testid="stSidebar"] .stMarkdown p,
+section[data-testid="stSidebar"] .stMarkdown span:not([class*="material"]) { 
+    font-family: 'Inter', sans-serif !important; 
+}
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3 {
@@ -288,9 +290,9 @@ div[data-testid="stExpander"] summary {
     color: #c3f5ff !important;
     list-style: none !important;
 }
-/* Target only the text label inside the summary — not the SVG arrow */
-div[data-testid="stExpander"] summary > div > p,
-div[data-testid="stExpander"] summary span:not([data-testid]) {
+/* Target only the text label inside the summary */
+div[data-testid="stExpander"] summary p,
+div[data-testid="stExpander"] summary .st-emotion-cache-1104aqp {
     font-family: 'Manrope', sans-serif !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
@@ -298,10 +300,10 @@ div[data-testid="stExpander"] summary span:not([data-testid]) {
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
-/* Prevent SVG arrow from inheriting font overrides */
+/* Prevent SVG and Material arrows from inheriting font overrides */
 div[data-testid="stExpander"] summary svg,
-div[data-testid="stExpander"] summary svg * {
-    font-family: initial !important;
+div[data-testid="stExpander"] summary span[class*="material"] {
+    font-family: "Material Symbols Rounded" !important;
     display: inline-block !important;
     visibility: visible !important;
 }
