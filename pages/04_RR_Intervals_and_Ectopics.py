@@ -60,7 +60,7 @@ def main():
 
     # ── KPI row ───────────────────────────────────────────────────────────────
     st.markdown(f"""
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1.25rem;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
       {kpi_card("Total Beats",      str(len(raw_rr)),           accent="primary")}
       {kpi_card("Ectopic Detected", str(n_ectopic),
                 accent="amber" if n_ectopic > 0 else "primary")}

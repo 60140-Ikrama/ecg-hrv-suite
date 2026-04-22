@@ -69,7 +69,7 @@ def main():
 
     # ── KPI row ───────────────────────────────────────────────────────────────
     st.markdown(f"""
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.75rem;margin-bottom:1.25rem;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
       {kpi_card("SD1",           f"{sd1:.1f}",   "ms",  accent="primary")}
       {kpi_card("SD2",           f"{sd2:.1f}",   "ms",  accent="green")}
       {kpi_card("SD1 / SD2",     f"{ratio:.3f}",        accent="amber")}

@@ -50,7 +50,7 @@ def main():
 
     # ── Stats bar ─────────────────────────────────────────────────────────────
     st.markdown(f"""
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1.25rem;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
       {kpi_card("Algorithm",   method,           accent="primary")}
       {kpi_card("R-Peaks",     str(len(rpeaks)), accent="green")}
       {kpi_card("Mean HR",     f"{hr:.1f}", "bpm", accent="amber")}

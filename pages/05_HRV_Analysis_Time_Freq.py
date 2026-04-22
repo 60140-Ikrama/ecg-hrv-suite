@@ -60,7 +60,7 @@ def main():
         cv_pct    = min(int(time_m.get("CV (%)",     0) * 5), 100)
 
         st.markdown(f"""
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:0.75rem;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:0.75rem;">
           {kpi_card("Mean RR", f"{time_m.get('Mean RR (ms)',0):.0f}", "ms",
                     accent="primary", bar_pct=60)}
           {kpi_card("Mean HR", f"{time_m.get('Mean HR (bpm)',0):.0f}", "bpm",
@@ -70,7 +70,7 @@ def main():
           {kpi_card("CV",      f"{time_m.get('CV (%)',0):.2f}",       "%",
                     accent="green", bar_pct=cv_pct)}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.25rem;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
           {kpi_card("RMSSD",   f"{time_m.get('RMSSD (ms)',0):.1f}",  "ms",
                     accent="primary", bar_pct=rmssd_pct)}
           {kpi_card("SDSD",    f"{time_m.get('SDSD (ms)',0):.1f}",   "ms",
@@ -166,7 +166,7 @@ def main():
 
         # KPI row
         st.markdown(f"""
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1.25rem;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
           {kpi_card("VLF Power", f"{freq_m.get('VLF Power (ms²)',0):.1f}", "ms²", accent="primary")}
           {kpi_card("LF Power",  f"{freq_m.get('LF Power (ms²)',0):.1f}",  "ms²", accent="amber")}
           {kpi_card("HF Power",  f"{freq_m.get('HF Power (ms²)',0):.1f}",  "ms²", accent="primary")}
@@ -233,7 +233,7 @@ def main():
         # Clinical cards
         lf_hf_interp = interpret_hrv(time_m if 'time_m' in dir() else {}, freq_m)
         st.markdown(f"""
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.75rem;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin-top:0.75rem;">
           <div class="clinical-card">
             <div class="clinical-title">🟠 LF Band (Sympathetic)</div>
             <div class="clinical-body">
