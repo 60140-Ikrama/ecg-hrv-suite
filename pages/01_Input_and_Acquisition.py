@@ -34,21 +34,6 @@ def main():
 
     if "raw_signals" not in st.session_state:
         st.session_state["raw_signals"] = {}
-        # Auto-load demo file
-        try:
-            demo_file = "ecgpvc.dat"
-            if os.path.exists(demo_file):
-                with open(demo_file, "rb") as f:
-                    class DummyFile:
-                        name = demo_file
-                        def read(self): return f.read()
-                    sig_arr, det_fs, _ = load_ecg_file(DummyFile())
-                    if sig_arr is not None:
-                        st.session_state["raw_signals"][demo_file] = sig_arr
-                        st.session_state["sfreq"] = det_fs or 250.0
-                        st.session_state["active_file"] = demo_file
-        except Exception as e:
-            pass
             
     if "sqi_cache" not in st.session_state:
         st.session_state["sqi_cache"] = {}

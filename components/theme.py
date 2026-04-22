@@ -6,7 +6,7 @@ import copy
 import streamlit as st
 
 # === STITCH DESIGN TOKENS ===
-COLORS = {
+DEFAULT_COLORS = {
     "primary": "#c3f5ff",
     "primary_dim": "#00daf3",
     "secondary_fixed": "#c3f400",
@@ -24,7 +24,23 @@ COLORS = {
     "outline_variant": "#3b494c",
     "on_primary": "#00363d",
     "error": "#ffb4ab",
+    "error_container": "#93000a",
+    "on_error": "#690005"
 }
+
+class DynamicColors(dict):
+    """Lazily fetches colors from st.session_state so the UI can be themed dynamically."""
+    def __getitem__(self, key):
+        import streamlit as st
+        theme = st.session_state.get("active_theme_dict", DEFAULT_COLORS)
+        return theme.get(key, DEFAULT_COLORS.get(key, "#ffffff"))
+        
+    def get(self, key, default=None):
+        import streamlit as st
+        theme = st.session_state.get("active_theme_dict", DEFAULT_COLORS)
+        return theme.get(key, DEFAULT_COLORS.get(key, default))
+
+COLORS = DynamicColors(DEFAULT_COLORS)
 
 PLOTLY_LAYOUT = dict(
     paper_bgcolor=COLORS["surface_container_lowest"],

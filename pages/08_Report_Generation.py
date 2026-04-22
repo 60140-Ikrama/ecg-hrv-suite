@@ -174,6 +174,114 @@ def build_markdown_report(metrics_dict: dict, settings: dict,
     return "\n".join(lines)
 
 
+# ── Chart & Document Generators ───────────────────────────────────────────────
+
+def _generate_report_charts(filename: str) -> dict:
+    import plotly.graph_objects as go
+    import numpy as np
+    from components.theme import COLORS, PLOTLY_LAYOUT
+    charts = {}
+    
+    # 1. ECG
+    sig = st.session_state.get("cleaned_signals", {}).get(filename)
+    if sig is None: sig = st.session_state.get("raw_signals", {}).get(filename)
+    sfreq = st.session_state.get("sfreq", 250.0)
+    if sig is not None:
+        t = np.arange(len(sig)) / sfreq
+        max_idx = min(len(sig), int(10 * sfreq))
+        fig_ecg = go.Figure()
+        fig_ecg.add_trace(go.Scatter(x=t[:max_idx], y=sig[:max_idx], line=dict(color=COLORS["primary"])))
+        fig_ecg.update_layout(title="ECG Waveform (First 10s)", showlegend=False, **PLOTLY_LAYOUT)
+        try: charts["ecg"] = fig_ecg.to_image(format="png", width=800, height=350, engine="kaleido")
+        except: pass
+        
+    # 2. Tachogram
+    rr = st.session_state.get("clean_rr_intervals", {}).get(filename)
+    if rr is not None and len(rr) > 0:
+        fig_rr = go.Figure()
+        fig_rr.add_trace(go.Scatter(y=rr, mode='lines+markers', line=dict(color=COLORS["primary_dim"])))
+        fig_rr.update_layout(title="RR Interval Tachogram", showlegend=False, **PLOTLY_LAYOUT)
+        try: charts["rr"] = fig_rr.to_image(format="png", width=800, height=350, engine="kaleido")
+        except: pass
+        
+    # 3. PSD
+    psd_dict = st.session_state.get("psd_data", {}).get(filename)
+    if psd_dict:
+        fig_psd = go.Figure()
+        fig_psd.add_trace(go.Scatter(x=psd_dict["f"], y=psd_dict["psd"], fill='tozeroy', line=dict(color=COLORS["secondary_fixed"])))
+        fig_psd.update_layout(title="Welch Power Spectral Density", showlegend=False, **PLOTLY_LAYOUT)
+        try: charts["psd"] = fig_psd.to_image(format="png", width=800, height=350, engine="kaleido")
+        except: pass
+        
+    return charts
+
+def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> bytes:
+    from fpdf import FPDF
+    import io
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.cell(0, 10, "Clinical Sentinel - ECG & HRV Analysis Report", new_x="LMARGIN", new_y="NEXT", align='C')
+    pdf.set_font("Helvetica", '', 10)
+    pdf.cell(0, 10, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", new_x="LMARGIN", new_y="NEXT", align='C')
+    
+    for fname, m in metrics_dict.items():
+        pdf.add_page()
+        pdf.set_font("Helvetica", 'B', 14)
+        pdf.cell(0, 10, f"File: {fname}", new_x="LMARGIN", new_y="NEXT")
+        
+        pdf.set_font("Helvetica", 'B', 12)
+        pdf.cell(0, 8, "Key Metrics", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Helvetica", '', 10)
+        
+        for k in ["Mean HR (bpm)", "SDNN (ms)", "RMSSD (ms)", "LF/HF Ratio", "DFA α1"]:
+            if k in m:
+                v = m[k]
+                s = f"{v:.2f}" if isinstance(v, float) else str(v)
+                pdf.cell(0, 6, f"{k}: {s}", new_x="LMARGIN", new_y="NEXT")
+                
+        # Embed Charts
+        charts = _generate_report_charts(fname)
+        for cname, cbytes in charts.items():
+            if pdf.get_y() > 200: pdf.add_page()
+            pdf.image(io.BytesIO(cbytes), w=180)
+            
+    return pdf.output()
+
+def build_docx_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> bytes:
+    import docx
+    from docx.shared import Inches
+    import io
+    doc = docx.Document()
+    doc.add_heading("Clinical Sentinel - ECG & HRV Analysis Report", 0)
+    doc.add_paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    for fname, m in metrics_dict.items():
+        doc.add_heading(f"File: {fname}", level=1)
+        
+        doc.add_heading("Key Metrics", level=2)
+        table = doc.add_table(rows=1, cols=2)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = "Metric"
+        hdr_cells[1].text = "Value"
+        for k in ["Mean HR (bpm)", "SDNN (ms)", "RMSSD (ms)", "LF/HF Ratio", "DFA α1"]:
+            if k in m:
+                v = m[k]
+                s = f"{v:.2f}" if isinstance(v, float) else str(v)
+                row_cells = table.add_row().cells
+                row_cells[0].text = k
+                row_cells[1].text = s
+                
+        # Embed Charts
+        charts = _generate_report_charts(fname)
+        for cname, cbytes in charts.items():
+            doc.add_picture(io.BytesIO(cbytes), width=Inches(6.0))
+            
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -202,7 +310,32 @@ def main():
         st.markdown(report_md)
 
     st.markdown("---")
-    section_header("Downloads")
+    section_header("Rich Document Export (CLO3)")
+    st.markdown('<div style="font-size:0.8rem;color:#849396;margin-bottom:1rem;">Generates comprehensive documents with embedded Plotly visualisations (ECG, Tachogram, PSD, Poincaré).</div>', unsafe_allow_html=True)
+    
+    col_pdf, col_docx, _ = st.columns([1, 1, 2])
+    with col_pdf:
+        if st.button("📄 Render PDF Report", use_container_width=True):
+            with st.spinner("Generating PDF (may take a few seconds)..."):
+                try:
+                    st.session_state["pdf_bytes"] = build_pdf_report(metrics_dict, settings, sqi_cache)
+                except Exception as e:
+                    st.error(f"Failed: {e}")
+        if "pdf_bytes" in st.session_state:
+            st.download_button("⬇️ Download PDF", data=st.session_state["pdf_bytes"], file_name=f"HRV_Report_{datetime.now().strftime('%Y%m%d')}.pdf", mime="application/pdf", use_container_width=True)
+            
+    with col_docx:
+        if st.button("📘 Render DOCX Report", use_container_width=True):
+            with st.spinner("Generating Word Document..."):
+                try:
+                    st.session_state["docx_bytes"] = build_docx_report(metrics_dict, settings, sqi_cache)
+                except Exception as e:
+                    st.error(f"Failed: {e}")
+        if "docx_bytes" in st.session_state:
+            st.download_button("⬇️ Download DOCX", data=st.session_state["docx_bytes"], file_name=f"HRV_Report_{datetime.now().strftime('%Y%m%d')}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+
+    st.markdown("---")
+    section_header("Raw Data Downloads")
 
     col1, col2, col3 = st.columns(3)
 

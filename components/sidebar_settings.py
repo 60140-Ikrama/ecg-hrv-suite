@@ -145,9 +145,71 @@ def render_sidebar_settings():
             st.session_state["enable_dfa"] = st.checkbox(
                 "Compute DFA (α1 / α2)", value=st.session_state["enable_dfa"])
 
+        # ── Theme Engine ──────────────────────────────────────────────────────
         st.markdown("---")
-        theme = st.selectbox("📊 Plot Theme", ["Dark (Clinical)", "Light"])
-        st.session_state["plot_theme"] = "plotly_dark" if "Dark" in theme else "plotly_white"
+        with st.expander("🎨 App Theme"):
+            PRESET_THEMES = {
+                "Clinical Sentinel (Dark)": None,
+                "Light Mode": {
+                    "surface_container_lowest": "#f0f2f5",
+                    "surface_container_low": "#ffffff",
+                    "surface_container": "#e4e7eb",
+                    "surface_container_high": "#d1d5db",
+                    "on_surface": "#111827",
+                    "on_surface_variant": "#374151",
+                    "primary": "#0ea5e9",
+                    "primary_dim": "#0284c7",
+                    "outline": "#9ca3af",
+                    "outline_variant": "#cbd5e1",
+                    "secondary_fixed": "#10b981",
+                    "tertiary_fixed_dim": "#f59e0b",
+                    "surface": "#ffffff"
+                },
+                "Neon Cyberpunk": {
+                    "surface_container_lowest": "#050014",
+                    "surface_container_low": "#0a0026",
+                    "surface_container": "#110038",
+                    "surface_container_high": "#1a004a",
+                    "on_surface": "#ff00ff",
+                    "on_surface_variant": "#00ffff",
+                    "primary": "#00ffff",
+                    "primary_dim": "#00b3b3",
+                    "secondary_fixed": "#ff00ff",
+                    "outline": "#39ff14",
+                    "outline_variant": "#39ff14",
+                    "tertiary_fixed_dim": "#ffff00",
+                    "surface": "#050014"
+                }
+            }
+            
+            sel_theme = st.selectbox("Select Preset", list(PRESET_THEMES.keys()))
+            
+            # Apply preset instantly (if it's not the custom JSON import overriding it)
+            if PRESET_THEMES[sel_theme] is not None:
+                # Only update if the dictionary changed to prevent infinite loops, 
+                # but streamlit handles this automatically on input change.
+                st.session_state["active_theme_dict"] = PRESET_THEMES[sel_theme]
+                st.session_state["plot_theme"] = "plotly_white" if "Light" in sel_theme else "plotly_dark"
+            else:
+                if "active_theme_dict" in st.session_state and not st.session_state.get("custom_theme_active"):
+                    del st.session_state["active_theme_dict"]
+                st.session_state["plot_theme"] = "plotly_dark"
+            
+            st.markdown("<div style='font-size:0.7rem;color:#849396;margin:1rem 0 0.2rem;'>Import from JSON URL</div>", unsafe_allow_html=True)
+            theme_url = st.text_input("Theme URL", placeholder="https://.../theme.json", label_visibility="collapsed")
+            if st.button("Fetch Custom Theme", use_container_width=True) and theme_url:
+                import requests
+                try:
+                    resp = requests.get(theme_url, timeout=5)
+                    resp.raise_for_status()
+                    custom_colors = resp.json()
+                    if isinstance(custom_colors, dict):
+                        st.session_state["active_theme_dict"] = custom_colors
+                        st.session_state["custom_theme_active"] = True
+                        st.success("Theme Applied!")
+                        st.rerun()
+                except Exception as e:
+                    st.error("Failed to load JSON")
 
         st.markdown(
             '<div style="font-size:0.6rem;color:#3b494c;font-family:Inter;'
