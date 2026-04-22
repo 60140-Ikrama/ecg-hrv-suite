@@ -132,11 +132,20 @@ def main():
         return
 
     # ── File selector ────────────────────────────────────────────────────────
-    col_sel, col_sqi = st.columns([2, 2], gap="medium")
+    col_sel, col_del, col_sqi = st.columns([2, 0.5, 2], gap="small")
     with col_sel:
         selected = st.selectbox("Active File", list(raw.keys()),
                                 label_visibility="collapsed")
         st.session_state["active_file"] = selected
+
+    with col_del:
+        if st.button("🗑️ Remove", use_container_width=True):
+            for cache_key in ["raw_signals", "sqi_cache", "cleaned_signals", 
+                              "rpeaks", "clean_rr_intervals", "metrics", "psd_data"]:
+                if selected in st.session_state.get(cache_key, {}):
+                    del st.session_state[cache_key][selected]
+            st.session_state["active_file"] = ""
+            st.rerun()
 
     signal = raw[selected]
     sfreq  = st.session_state.get("sfreq", 250.0)
