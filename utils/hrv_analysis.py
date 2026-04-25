@@ -216,12 +216,10 @@ def approximate_entropy(rr_ms: np.ndarray, m: int = 2,
 
     def _phi(tlen):
         cnt = np.array([
-            np.sum(np.max(np.abs(rr_ms[i:i+tlen] - rr_ms[j:j+tlen]
-                                 if j != i else np.zeros(tlen)), axis=-1) < r
-                   if False else
-                   np.sum([np.max(np.abs(rr_ms[i:i+tlen] -
-                                         rr_ms[j:j+tlen])) < r
-                            for j in range(N - tlen + 1)]))
+            np.sum([
+                np.max(np.abs(rr_ms[i:i+tlen] - rr_ms[j:j+tlen])) < r
+                for j in range(N - tlen + 1)
+            ])
             for i in range(N - tlen + 1)
         ], dtype=float)
         cnt = np.maximum(cnt, 1)
