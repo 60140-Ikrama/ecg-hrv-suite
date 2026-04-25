@@ -47,13 +47,10 @@ def _bar_chart(files, metrics_dict, key, label, color_idx_offset=0):
     lay = get_plot_layout()
     lay["height"]        = 290
     lay["showlegend"]    = False
-    lay["title"]         = None
+    lay["title"]         = dict(text=label, font=dict(color=COLORS["primary"], size=12, family="Manrope"))
     lay["yaxis"]["title"] = key
     lay["margin"]        = dict(l=30, r=10, t=30, b=40)
     fig.update_layout(**lay)
-    fig.update_layout(title_text=label,
-                      title_font=dict(color=COLORS["primary"], size=12,
-                                      family="Manrope"))
     return fig
 
 
@@ -170,7 +167,7 @@ def main():
         angularaxis=dict(gridcolor=COLORS["outline_variant"],
                          tickfont=dict(color=COLORS["on_surface_variant"], size=10)))
     lay_r["height"] = 460
-    lay_r["title"]  = None
+    lay_r["title"]  = dict(text="")
     fig_r.update_layout(**lay_r)
     st.plotly_chart(fig_r, use_container_width=True)
 
@@ -206,7 +203,7 @@ def main():
         lay_psd["xaxis"]["range"] = [0, 0.5]
         lay_psd["yaxis"]["title"] = "PSD (ms²/Hz)"
         lay_psd["height"]         = 400
-        lay_psd["title"]          = None
+        lay_psd["title"]          = dict(text="")
         fig_psd.update_layout(**lay_psd)
         st.plotly_chart(fig_psd, use_container_width=True,
                         config={"scrollZoom": True})
@@ -232,7 +229,7 @@ def main():
         lay_s["xaxis"]["title"] = "RMSSD (ms)"
         lay_s["yaxis"]["title"] = "HF Power (ms²)"
         lay_s["height"]         = 380
-        lay_s["title"]          = None
+        lay_s["title"]          = dict(text="")
         fig_s.update_layout(**lay_s)
         st.plotly_chart(fig_s, use_container_width=True)
 

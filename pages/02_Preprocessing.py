@@ -113,7 +113,7 @@ def main():
     lay["xaxis"]["title"] = "Time (s)"
     lay["yaxis"]["title"] = "Amplitude"
     lay["height"] = 420
-    lay["title"]  = None
+    lay["title"]  = dict(text="")
     fig.update_layout(**lay)
     st.plotly_chart(fig, use_container_width=True,
                     config={"scrollZoom": True, "displayModeBar": True})
@@ -138,7 +138,7 @@ def main():
         lay2 = get_plot_layout()
         lay2["height"] = 160 * n_steps
         lay2["showlegend"] = False
-        lay2["title"] = None
+        lay2["title"] = dict(text="")
         fig2.update_layout(**lay2)
         st.plotly_chart(fig2, use_container_width=True)
 

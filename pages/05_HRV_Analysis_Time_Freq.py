@@ -98,7 +98,7 @@ def main():
         lay["height"] = 280
         lay["xaxis"]["title"] = "Beat Number"
         lay["yaxis"]["title"] = "|ΔRR| (ms)"
-        lay["title"] = None
+        lay["title"] = dict(text="")
         fig.update_layout(**lay)
         st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
@@ -121,7 +121,7 @@ def main():
             lay_t["height"] = 260
             lay_t["xaxis"]["title"] = "Beat Centre"
             lay_t["yaxis"]["title"] = "ms"
-            lay_t["title"] = None
+            lay_t["title"] = dict(text="")
             fig_t.update_layout(**lay_t)
             st.plotly_chart(fig_t, use_container_width=True)
         else:
@@ -226,7 +226,7 @@ def main():
         lay_p["xaxis"]["title"] = "Frequency (Hz)"
         lay_p["xaxis"]["range"] = [0, 0.5]
         lay_p["yaxis"]["title"] = "PSD (ms²/Hz)"
-        lay_p["title"] = None
+        lay_p["title"] = dict(text="")
         fig_p.update_layout(**lay_p)
         st.plotly_chart(fig_p, use_container_width=True)
 

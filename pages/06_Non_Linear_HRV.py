@@ -128,7 +128,7 @@ def main():
         lay["xaxis"]["title"]        = "RR(n) (ms)"
         lay["yaxis"]["title"]        = "RR(n+1) (ms)"
         lay["yaxis"]["scaleanchor"]  = "x"
-        lay["title"]                 = None
+        lay["title"]                 = dict(text="")
         fig.update_layout(**lay)
         st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
@@ -207,7 +207,7 @@ def main():
         lay_d["height"]       = 360
         lay_d["xaxis"]["title"] = "log₁₀(Scale n)"
         lay_d["yaxis"]["title"] = "log₁₀(F(n))"
-        lay_d["title"] = None
+        lay_d["title"] = dict(text="")
         fig_d.update_layout(**lay_d)
         st.plotly_chart(fig_d, use_container_width=True)
 

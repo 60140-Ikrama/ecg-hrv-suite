@@ -46,7 +46,7 @@ PLOTLY_LAYOUT = dict(
     paper_bgcolor=COLORS["surface_container_lowest"],
     plot_bgcolor=COLORS["surface_container_lowest"],
     font=dict(family="Inter, sans-serif", color=COLORS["on_surface_variant"], size=11),
-    title_font=dict(family="Manrope, sans-serif", color=COLORS["primary"], size=14),
+    title=dict(text="", font=dict(family="Manrope, sans-serif", color=COLORS["primary"], size=14)),
     margin=dict(l=50, r=20, t=50, b=50),
     xaxis=dict(
         gridcolor=COLORS["outline_variant"],
@@ -73,6 +73,10 @@ PLOTLY_LAYOUT = dict(
         bgcolor=COLORS["surface_container_high"],
         bordercolor=COLORS["outline_variant"],
         font=dict(color=COLORS["on_surface"], family="Inter"),
+    ),
+    annotationdefaults=dict(
+        font=dict(family="Manrope, sans-serif", color=COLORS["on_surface_variant"], size=11),
+        showarrow=False,
     ),
 )
 

@@ -104,7 +104,7 @@ def main():
     lay = get_plot_layout()
     lay["height"] = 500
     lay["showlegend"] = True
-    lay["title"] = None
+    lay["title"] = dict(text="")
     fig.update_layout(**lay)
     fig.update_xaxes(title_text="Beat Number", row=2, col=1)
     fig.update_yaxes(title_text="RR (ms)", gridcolor=COLORS["outline_variant"])
@@ -131,7 +131,7 @@ def main():
                         annotation_font=dict(color=COLORS["error"], size=10))
         lay_z = get_plot_layout()
         lay_z["height"] = 280
-        lay_z["title"]  = None
+        lay_z["title"]  = dict(text="")
         lay_z["xaxis"]["title"] = "Beat Number"
         lay_z["yaxis"]["title"] = "Z-Score"
         fig_z.update_layout(**lay_z)
@@ -162,7 +162,7 @@ def main():
                 marker_line=dict(color=COLORS["outline_variant"], width=0.5)))
             lh = get_plot_layout()
             lh["height"] = 260
-            lh["title"]  = None
+            lh["title"]  = dict(text="")
             lh["xaxis"]["title"] = "RR (ms)"
             lh["yaxis"]["title"] = "Count"
             fh.update_layout(**lh)
