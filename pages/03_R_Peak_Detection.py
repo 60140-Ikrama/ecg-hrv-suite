@@ -130,8 +130,7 @@ def main():
                         line=dict(color='white', width=0.5)),
             hovertemplate=f"{m}<br>t=%{{x:.3f}}s<extra></extra>"))
 
-    lay2 = get_plot_layout()
-    lay2["title"]  = dict(text="")
+    lay2 = get_plot_layout(title_text="All Methods — Peak Position Overlay")
     lay2["height"] = 360
     lay2["xaxis"]["title"] = "Time (s)"
     lay2["yaxis"]["title"] = "Amplitude"
@@ -149,8 +148,7 @@ def main():
             marker_color=COLORS["primary_dim"],
             marker_line=dict(color=COLORS["outline_variant"], width=0.5),
             name='RR Distribution'))
-        lay3 = get_plot_layout()
-        lay3["title"]  = dict(text="")
+        lay3 = get_plot_layout(title_text="RR Interval Distribution")
         lay3["height"] = 280
         lay3["xaxis"]["title"] = "RR Interval (ms)"
         lay3["yaxis"]["title"] = "Count"

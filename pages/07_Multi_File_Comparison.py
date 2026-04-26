@@ -158,7 +158,7 @@ def main():
             name=name,
             line=dict(color=PALETTE[i % len(PALETTE)], width=2)))
 
-    lay_r = get_plot_layout()
+    lay_r = get_plot_layout(title_text="Normalized HRV Metrics (Radar)")
     lay_r["polar"] = dict(
         bgcolor=COLORS["surface_container_lowest"],
         radialaxis=dict(visible=True, range=[0, 1],
@@ -167,7 +167,6 @@ def main():
         angularaxis=dict(gridcolor=COLORS["outline_variant"],
                          tickfont=dict(color=COLORS["on_surface_variant"], size=10)))
     lay_r["height"] = 460
-    lay_r["title"]  = dict(text="")
     fig_r.update_layout(**lay_r)
     st.plotly_chart(fig_r, use_container_width=True)
 
@@ -198,12 +197,11 @@ def main():
                           fillcolor="rgba(0,218,243,0.07)", line_width=0,
                           annotation_text="HF",
                           annotation_font=dict(color=COLORS["primary_dim"], size=10))
-        lay_psd = get_plot_layout()
+        lay_psd = get_plot_layout(title_text="PSD Overlay (Welch's Method)")
         lay_psd["xaxis"]["title"] = "Frequency (Hz)"
         lay_psd["xaxis"]["range"] = [0, 0.5]
         lay_psd["yaxis"]["title"] = "PSD (ms²/Hz)"
         lay_psd["height"]         = 400
-        lay_psd["title"]          = dict(text="")
         fig_psd.update_layout(**lay_psd)
         st.plotly_chart(fig_psd, use_container_width=True,
                         config={"scrollZoom": True})
@@ -225,11 +223,10 @@ def main():
             textfont=dict(color=COLORS["on_surface_variant"], size=9),
             marker=dict(size=14, color=colors,
                         line=dict(color='white', width=1.5))))
-        lay_s = get_plot_layout()
+        lay_s = get_plot_layout(title_text="RMSSD vs HF Power Concordance")
         lay_s["xaxis"]["title"] = "RMSSD (ms)"
         lay_s["yaxis"]["title"] = "HF Power (ms²)"
         lay_s["height"]         = 380
-        lay_s["title"]          = dict(text="")
         fig_s.update_layout(**lay_s)
         st.plotly_chart(fig_s, use_container_width=True)
 

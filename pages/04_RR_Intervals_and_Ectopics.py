@@ -80,34 +80,33 @@ def main():
                           vertical_spacing=0.08,
                           subplot_titles=["Raw RR Series", "Corrected RR Series"])
 
-    fig.add_trace(go.Scatter(x=beats, y=raw_rr, mode='lines', name='Raw RR',
+    fig.add_trace(go.Scatter(x=beats, y=raw_rr / 1000.0, mode='lines', name='Raw RR',
                               line=dict(color=COLORS["outline"], width=1.2)),
                   row=1, col=1)
     if n_ectopic > 0:
         eidx = np.where(mask)[0]
         fig.add_trace(go.Scatter(
-            x=eidx, y=raw_rr[eidx], mode='markers', name='Ectopic',
+            x=eidx, y=raw_rr[eidx] / 1000.0, mode='markers', name='Ectopic',
             marker=dict(color=COLORS["error"], size=9, symbol='x',
                         line=dict(color='white', width=1.5))),
             row=1, col=1)
 
-    fig.add_trace(go.Scatter(x=beats, y=clean_rr, mode='lines', name='Clean RR',
+    fig.add_trace(go.Scatter(x=beats, y=clean_rr / 1000.0, mode='lines', name='Clean RR',
                               line=dict(color=COLORS["primary_dim"], width=1.5)),
                   row=2, col=1)
     if n_ectopic > 0:
         fig.add_trace(go.Scatter(
-            x=eidx, y=clean_rr[eidx], mode='markers', name='Interpolated',
+            x=eidx, y=clean_rr[eidx] / 1000.0, mode='markers', name='Interpolated',
             marker=dict(color=COLORS["secondary_fixed"], size=7,
                         line=dict(color='white', width=1))),
             row=2, col=1)
 
-    lay = get_plot_layout()
+    lay = get_plot_layout(title_text="RR Tachogram")
     lay["height"] = 500
     lay["showlegend"] = True
-    lay["title"] = dict(text="")
     fig.update_layout(**lay)
     fig.update_xaxes(title_text="Beat Number", row=2, col=1)
-    fig.update_yaxes(title_text="RR (ms)", gridcolor=COLORS["outline_variant"])
+    fig.update_yaxes(title_text="RR (s)", gridcolor=COLORS["outline_variant"])
     st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
     # ── Anomaly z-score plot ───────────────────────────────────────────────────
@@ -129,9 +128,8 @@ def main():
                         line_color=COLORS["error"],
                         annotation_text=f"−{anomaly_z}σ",
                         annotation_font=dict(color=COLORS["error"], size=10))
-        lay_z = get_plot_layout()
+        lay_z = get_plot_layout(title_text="Z-Score Anomaly Distribution")
         lay_z["height"] = 280
-        lay_z["title"]  = dict(text="")
         lay_z["xaxis"]["title"] = "Beat Number"
         lay_z["yaxis"]["title"] = "Z-Score"
         fig_z.update_layout(**lay_z)
@@ -150,8 +148,8 @@ def main():
     # ── Distribution comparison ────────────────────────────────────────────────
     col1, col2 = st.columns(2)
     for col, arr, lbl, color in [
-        (col1, raw_rr,   "Raw RR",   COLORS["outline"]),
-        (col2, clean_rr, "Clean RR", COLORS["primary_dim"]),
+        (col1, raw_rr / 1000.0,   "Raw RR",   COLORS["outline"]),
+        (col2, clean_rr / 1000.0, "Clean RR", COLORS["primary_dim"]),
     ]:
         with col:
             section_header(f"{lbl} Distribution")
@@ -160,10 +158,9 @@ def main():
                 x=arr, nbinsx=40, name=lbl,
                 marker_color=color,
                 marker_line=dict(color=COLORS["outline_variant"], width=0.5)))
-            lh = get_plot_layout()
+            lh = get_plot_layout(title_text=f"{lbl} Histogram")
             lh["height"] = 260
-            lh["title"]  = dict(text="")
-            lh["xaxis"]["title"] = "RR (ms)"
+            lh["xaxis"]["title"] = "RR (s)"
             lh["yaxis"]["title"] = "Count"
             fh.update_layout(**lh)
             st.plotly_chart(fh, use_container_width=True)

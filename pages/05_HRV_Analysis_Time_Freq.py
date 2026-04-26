@@ -94,11 +94,10 @@ def main():
         fig.add_hline(y=50, line_dash="dot", line_color=COLORS["secondary_fixed"],
                       annotation_text="NN50 threshold (50 ms)",
                       annotation_font=dict(color=COLORS["secondary_fixed"], size=10))
-        lay = get_plot_layout()
+        lay = get_plot_layout(title_text="Successive RR Differences (|ΔRR|)")
         lay["height"] = 280
         lay["xaxis"]["title"] = "Beat Number"
         lay["yaxis"]["title"] = "|ΔRR| (ms)"
-        lay["title"] = dict(text="")
         fig.update_layout(**lay)
         st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
@@ -117,11 +116,10 @@ def main():
                 mode='lines+markers', name='RMSSD',
                 line=dict(color=COLORS["primary_dim"], width=2),
                 marker=dict(size=5)))
-            lay_t = get_plot_layout()
+            lay_t = get_plot_layout(title_text="HRV Trend Analysis (SDNN / RMSSD)")
             lay_t["height"] = 260
             lay_t["xaxis"]["title"] = "Beat Centre"
             lay_t["yaxis"]["title"] = "ms"
-            lay_t["title"] = dict(text="")
             fig_t.update_layout(**lay_t)
             st.plotly_chart(fig_t, use_container_width=True)
         else:
@@ -221,12 +219,11 @@ def main():
                 text=label, showarrow=False,
                 font=dict(color=color, size=10))
 
-        lay_p = get_plot_layout()
+        lay_p = get_plot_layout(title_text="Welch's Power Spectral Density")
         lay_p["height"] = 420
         lay_p["xaxis"]["title"] = "Frequency (Hz)"
         lay_p["xaxis"]["range"] = [0, 0.5]
         lay_p["yaxis"]["title"] = "PSD (ms²/Hz)"
-        lay_p["title"] = dict(text="")
         fig_p.update_layout(**lay_p)
         st.plotly_chart(fig_p, use_container_width=True)
 

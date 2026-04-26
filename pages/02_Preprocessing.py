@@ -113,7 +113,7 @@ def main():
     lay["xaxis"]["title"] = "Time (s)"
     lay["yaxis"]["title"] = "Amplitude"
     lay["height"] = 420
-    lay["title"]  = dict(text="")
+    lay["title"]  = dict(text="Filtered ECG Signal", font=dict(family="Manrope", color=COLORS["primary"], size=13))
     fig.update_layout(**lay)
     st.plotly_chart(fig, use_container_width=True,
                     config={"scrollZoom": True, "displayModeBar": True})
@@ -138,7 +138,7 @@ def main():
         lay2 = get_plot_layout()
         lay2["height"] = 160 * n_steps
         lay2["showlegend"] = False
-        lay2["title"] = dict(text="")
+        lay2["title"] = dict(text="Power Spectral Density (PSD)", font=dict(family="Manrope", color=COLORS["primary"], size=13))
         fig2.update_layout(**lay2)
         st.plotly_chart(fig2, use_container_width=True)
 

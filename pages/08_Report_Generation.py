@@ -217,7 +217,8 @@ def _generate_report_charts(filename: str) -> dict:
 
 def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> bytes:
     from fpdf import FPDF
-    import io
+    import tempfile
+    import os
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16)
@@ -244,9 +245,17 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
         charts = _generate_report_charts(fname)
         for cname, cbytes in charts.items():
             if pdf.get_y() > 200: pdf.add_page()
-            pdf.image(io.BytesIO(cbytes), w=180)
+            # Save to temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+                tmp.write(cbytes)
+                tmp_path = tmp.name
+            pdf.image(tmp_path, w=180)
+            os.remove(tmp_path)
             
-    return pdf.output()
+    res = pdf.output(dest='S')
+    if isinstance(res, str):
+        return res.encode('latin1')
+    return res
 
 def build_docx_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> bytes:
     import docx

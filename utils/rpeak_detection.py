@@ -51,6 +51,8 @@ def pan_tompkins_detect(ecg: np.ndarray, sfreq: float) -> np.ndarray:
     init_end = min(int(2.0 * sfreq), N)
     spk_i = float(np.max(mwi[:init_end]))
     npk_i = float(np.mean(mwi[:init_end]))
+    if spk_i < 1e-6:
+        spk_i = 1e-6
     thr1  = npk_i + 0.25 * (spk_i - npk_i)
     thr2  = 0.5 * thr1
 
