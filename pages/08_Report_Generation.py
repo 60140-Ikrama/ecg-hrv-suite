@@ -225,12 +225,22 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
     FONT_NAME = "DejaVu"
     try:
         import matplotlib
-        fpath = _pl.Path(matplotlib.get_data_path()) / "fonts" / "ttf" / "DejaVuSans.ttf"
-        if fpath.exists():
-            pdfmetrics.registerFont(TTFont(FONT_NAME, str(fpath)))
+        fdir = _pl.Path(matplotlib.get_data_path()) / "fonts" / "ttf"
+        fpath_reg = fdir / "DejaVuSans.ttf"
+        fpath_bold = fdir / "DejaVuSans-Bold.ttf"
+        
+        if fpath_reg.exists():
+            pdfmetrics.registerFont(TTFont("DejaVu", str(fpath_reg)))
+            if fpath_bold.exists():
+                pdfmetrics.registerFont(TTFont("DejaVu-Bold", str(fpath_bold)))
+                # Link regular and bold into a family
+                from reportlab.pdfbase.pdfmetrics import registerFontFamily
+                registerFontFamily("DejaVu", normal="DejaVu", bold="DejaVu-Bold")
+            FONT_NAME = "DejaVu"
         else:
             FONT_NAME = "Helvetica" # Fallback
-    except: FONT_NAME = "Helvetica"
+    except:
+        FONT_NAME = "Helvetica"
 
     buf = _io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, margin=1.5*cm)
