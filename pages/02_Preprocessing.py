@@ -6,7 +6,7 @@ import sys, os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
-                               pipeline_status_bar, section_header, COLORS, get_plot_layout)
+                               pipeline_status_bar, section_header, COLORS, get_plot_layout, set_layout)
 from components.sidebar_settings import render_sidebar_settings
 from utils.signal_processing import (remove_baseline_wander, apply_bandpass_filter,
                                       apply_notch_filter, apply_wavelet_denoise,
@@ -109,12 +109,8 @@ def main():
         x=t[::step], y=clean[::step], mode='lines', name='Filtered',
         line=dict(color=COLORS["secondary_fixed"], width=1.8),
         hovertemplate="t=%{x:.3f}s<br>Filtered=%{y:.4f}<extra>Filtered</extra>"))
-    lay = get_plot_layout()
-    lay["xaxis"]["title"] = "Time (s)"
-    lay["yaxis"]["title"] = "Amplitude"
-    lay["height"] = 420
-    lay["title"]  = dict(text="Filtered ECG Signal", font=dict(family="Manrope", color=COLORS["primary"], size=13))
-    fig.update_layout(**lay)
+    set_layout(fig, "Filtered ECG Signal", xaxis_title="Time (s)", yaxis_title="Amplitude")
+    fig.update_layout(height=420)
     st.plotly_chart(fig, use_container_width=True,
                     config={"scrollZoom": True, "displayModeBar": True})
 
@@ -135,11 +131,8 @@ def main():
                 x=t[::step], y=arr[::step], mode='lines',
                 name=name, line=dict(color=color, width=1.2)),
                 row=row, col=1)
-        lay2 = get_plot_layout()
-        lay2["height"] = 160 * n_steps
-        lay2["showlegend"] = False
-        lay2["title"] = dict(text="Power Spectral Density (PSD)", font=dict(family="Manrope", color=COLORS["primary"], size=13))
-        fig2.update_layout(**lay2)
+        set_layout(fig2, "Pipeline Stage Visualization", xaxis_title="Time (s)", yaxis_title="Amplitude")
+        fig2.update_layout(height=160 * n_steps, showlegend=False)
         st.plotly_chart(fig2, use_container_width=True)
 
     # ── Stats comparison ─────────────────────────────────────────────────────

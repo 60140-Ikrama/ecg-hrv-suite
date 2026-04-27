@@ -8,7 +8,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
                                pipeline_status_bar, section_header,
-                               kpi_card, COLORS, get_plot_layout)
+                               kpi_card, COLORS, get_plot_layout, set_layout)
 from components.sidebar_settings import render_sidebar_settings
 from utils.rpeak_detection import (detect_r_peaks, compare_r_peak_methods,
                                     compute_agreement, compute_heart_rate,
@@ -73,13 +73,8 @@ def main():
                     symbol='triangle-up',
                     line=dict(color=COLORS["on_primary"], width=1)),
         hovertemplate="t=%{x:.3f}s<br>amp=%{y:.4f}<extra>R-Peak</extra>"))
-    lay = get_plot_layout()
-    lay["title"]  = dict(text=f"R-Peak Detection — {method}",
-                          font=dict(family="Manrope", color=COLORS["primary"], size=13))
-    lay["xaxis"]["title"] = "Time (s)"
-    lay["yaxis"]["title"] = "Amplitude"
-    lay["height"] = 460
-    fig.update_layout(**lay)
+    set_layout(fig, f"R-Peak Detection — {method}", xaxis_title="Time (s)", yaxis_title="Amplitude")
+    fig.update_layout(height=460)
     st.plotly_chart(fig, use_container_width=True,
                     config={"scrollZoom": True, "displayModeBar": True})
 
@@ -130,11 +125,8 @@ def main():
                         line=dict(color='white', width=0.5)),
             hovertemplate=f"{m}<br>t=%{{x:.3f}}s<extra></extra>"))
 
-    lay2 = get_plot_layout(title_text="All Methods — Peak Position Overlay")
-    lay2["height"] = 360
-    lay2["xaxis"]["title"] = "Time (s)"
-    lay2["yaxis"]["title"] = "Amplitude"
-    fig2.update_layout(**lay2)
+    set_layout(fig2, "All Methods — Peak Position Overlay", xaxis_title="Time (s)", yaxis_title="Amplitude")
+    fig2.update_layout(height=360)
     st.plotly_chart(fig2, use_container_width=True,
                     config={"scrollZoom": True, "displayModeBar": True})
 
@@ -148,11 +140,8 @@ def main():
             marker_color=COLORS["primary_dim"],
             marker_line=dict(color=COLORS["outline_variant"], width=0.5),
             name='RR Distribution'))
-        lay3 = get_plot_layout(title_text="RR Interval Distribution")
-        lay3["height"] = 280
-        lay3["xaxis"]["title"] = "RR Interval (ms)"
-        lay3["yaxis"]["title"] = "Count"
-        fig3.update_layout(**lay3)
+        set_layout(fig3, "RR Interval Distribution", xaxis_title="RR Interval (ms)", yaxis_title="Count")
+        fig3.update_layout(height=280)
         st.plotly_chart(fig3, use_container_width=True)
 
     # ── Pan-Tompkins CLO1 explanation ─────────────────────────────────────────

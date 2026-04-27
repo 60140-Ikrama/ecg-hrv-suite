@@ -8,7 +8,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
                                pipeline_status_bar, section_header,
-                               COLORS, get_plot_layout)
+                               COLORS, get_plot_layout, set_layout)
 from components.sidebar_settings import render_sidebar_settings
 
 st.set_page_config(page_title="Multi-File Comparison · Clinical Sentinel",
@@ -44,13 +44,8 @@ def _bar_chart(files, metrics_dict, key, label, color_idx_offset=0):
                 marker_color=PALETTE[(i + color_idx_offset) % len(PALETTE)],
                 text=[f"{val:.1f}"], textposition="outside",
                 textfont=dict(color=COLORS["on_surface_variant"], size=9)))
-    lay = get_plot_layout()
-    lay["height"]        = 290
-    lay["showlegend"]    = False
-    lay["title"]         = dict(text=label, font=dict(color=COLORS["primary"], size=12, family="Manrope"))
-    lay["yaxis"]["title"] = key
-    lay["margin"]        = dict(l=30, r=10, t=30, b=40)
-    fig.update_layout(**lay)
+    set_layout(fig, label, xaxis_title="", yaxis_title=key)
+    fig.update_layout(height=290, showlegend=False, margin=dict(l=30, r=10, t=30, b=40))
     return fig
 
 
@@ -158,16 +153,17 @@ def main():
             name=name,
             line=dict(color=PALETTE[i % len(PALETTE)], width=2)))
 
-    lay_r = get_plot_layout(title_text="Normalized HRV Metrics (Radar)")
-    lay_r["polar"] = dict(
-        bgcolor=COLORS["surface_container_lowest"],
-        radialaxis=dict(visible=True, range=[0, 1],
-                        gridcolor=COLORS["outline_variant"],
-                        tickfont=dict(color=COLORS["on_surface_variant"], size=9)),
-        angularaxis=dict(gridcolor=COLORS["outline_variant"],
-                         tickfont=dict(color=COLORS["on_surface_variant"], size=10)))
-    lay_r["height"] = 460
-    fig_r.update_layout(**lay_r)
+    set_layout(fig_r, "Normalized HRV Metrics (Radar)", xaxis_title="", yaxis_title="")
+    fig_r.update_layout(
+        polar=dict(
+            bgcolor=COLORS["surface_container_lowest"],
+            radialaxis=dict(visible=True, range=[0, 1],
+                            gridcolor=COLORS["outline_variant"],
+                            tickfont=dict(color=COLORS["on_surface_variant"], size=9)),
+            angularaxis=dict(gridcolor=COLORS["outline_variant"],
+                             tickfont=dict(color=COLORS["on_surface_variant"], size=10))),
+        height=460
+    )
     st.plotly_chart(fig_r, use_container_width=True)
 
     # ── PSD Overlay ───────────────────────────────────────────────────────────
@@ -197,12 +193,8 @@ def main():
                           fillcolor="rgba(0,218,243,0.07)", line_width=0,
                           annotation_text="HF",
                           annotation_font=dict(color=COLORS["primary_dim"], size=10))
-        lay_psd = get_plot_layout(title_text="PSD Overlay (Welch's Method)")
-        lay_psd["xaxis"]["title"] = "Frequency (Hz)"
-        lay_psd["xaxis"]["range"] = [0, 0.5]
-        lay_psd["yaxis"]["title"] = "PSD (ms²/Hz)"
-        lay_psd["height"]         = 400
-        fig_psd.update_layout(**lay_psd)
+        set_layout(fig_psd, "PSD Overlay (Welch's Method)", xaxis_title="Frequency (Hz)", yaxis_title="PSD (ms²/Hz)")
+        fig_psd.update_layout(xaxis=dict(range=[0, 0.5]), height=400)
         st.plotly_chart(fig_psd, use_container_width=True,
                         config={"scrollZoom": True})
 
@@ -223,11 +215,8 @@ def main():
             textfont=dict(color=COLORS["on_surface_variant"], size=9),
             marker=dict(size=14, color=colors,
                         line=dict(color='white', width=1.5))))
-        lay_s = get_plot_layout(title_text="RMSSD vs HF Power Concordance")
-        lay_s["xaxis"]["title"] = "RMSSD (ms)"
-        lay_s["yaxis"]["title"] = "HF Power (ms²)"
-        lay_s["height"]         = 380
-        fig_s.update_layout(**lay_s)
+        set_layout(fig_s, "RMSSD vs HF Power Concordance", xaxis_title="RMSSD (ms)", yaxis_title="HF Power (ms²)")
+        fig_s.update_layout(height=380)
         st.plotly_chart(fig_s, use_container_width=True)
 
     # ── Statistical delta table ───────────────────────────────────────────────

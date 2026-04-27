@@ -7,7 +7,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
                                pipeline_status_bar, kpi_card, section_header,
-                               COLORS, get_plot_layout)
+                               COLORS, get_plot_layout, set_layout)
 from components.sidebar_settings import render_sidebar_settings
 from utils.hrv_analysis import (get_nonlinear_hrv, sample_entropy,
                                  approximate_entropy, detrended_fluctuation_analysis)
@@ -123,12 +123,8 @@ def main():
                 mode='lines', name=name,
                 line=dict(color=color, dash='dot', width=2)))
 
-        lay = get_plot_layout(title_text="Poincaré Plot")
-        lay["height"]                = 460
-        lay["xaxis"]["title"]        = "RR(n) (ms)"
-        lay["yaxis"]["title"]        = "RR(n+1) (ms)"
-        lay["yaxis"]["scaleanchor"]  = "x"
-        fig.update_layout(**lay)
+        set_layout(fig, "Poincaré Plot", xaxis_title="RR(n) (ms)", yaxis_title="RR(n+1) (ms)")
+        fig.update_layout(height=460, yaxis_scaleanchor="x")
         st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
     with col2:
@@ -202,11 +198,8 @@ def main():
                     mode='lines', name=lbl,
                     line=dict(color=color, dash='dash', width=2)))
 
-        lay_d = get_plot_layout(title_text="Detrended Fluctuation Analysis")
-        lay_d["height"]       = 360
-        lay_d["xaxis"]["title"] = "log₁₀(Scale n)"
-        lay_d["yaxis"]["title"] = "log₁₀(F(n))"
-        fig_d.update_layout(**lay_d)
+        set_layout(fig_d, "Detrended Fluctuation Analysis", xaxis_title="log₁₀(Scale n)", yaxis_title="log₁₀(F(n))")
+        fig_d.update_layout(height=360)
         st.plotly_chart(fig_d, use_container_width=True)
 
         # DFA interpretation

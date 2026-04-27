@@ -8,7 +8,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
                                pipeline_status_bar, kpi_card, section_header,
-                               COLORS, get_plot_layout)
+                               COLORS, get_plot_layout, set_layout)
 from components.sidebar_settings import render_sidebar_settings
 from utils.rpeak_detection import get_rr_intervals
 from utils.hrv_analysis import (detect_ectopic_beats, correct_ectopic_beats,
@@ -53,10 +53,14 @@ def main():
     pct_ectopic = n_ectopic / len(raw_rr) * 100
     n_anomaly   = len(anomalies["indices"])
 
-    # Store clean RR
+    # Store clean and raw RR
     if "clean_rr_intervals" not in st.session_state:
         st.session_state["clean_rr_intervals"] = {}
+    if "raw_rr_intervals" not in st.session_state:
+        st.session_state["raw_rr_intervals"] = {}
+        
     st.session_state["clean_rr_intervals"][active] = clean_rr
+    st.session_state["raw_rr_intervals"][active] = raw_rr
 
     # ── KPI row ───────────────────────────────────────────────────────────────
     st.markdown(f"""
@@ -101,12 +105,9 @@ def main():
                         line=dict(color='white', width=1))),
             row=2, col=1)
 
-    lay = get_plot_layout(title_text="RR Tachogram")
-    lay["height"] = 500
-    lay["showlegend"] = True
-    fig.update_layout(**lay)
-    fig.update_xaxes(title_text="Beat Number", row=2, col=1)
-    fig.update_yaxes(title_text="RR (s)", gridcolor=COLORS["outline_variant"])
+    set_layout(fig, "RR Tachogram", xaxis_title="Beat Number", yaxis_title="RR (s)")
+    fig.update_layout(height=500, showlegend=True)
+    fig.update_yaxes(gridcolor=COLORS["outline_variant"])
     st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
     # ── Anomaly z-score plot ───────────────────────────────────────────────────
@@ -128,11 +129,8 @@ def main():
                         line_color=COLORS["error"],
                         annotation_text=f"−{anomaly_z}σ",
                         annotation_font=dict(color=COLORS["error"], size=10))
-        lay_z = get_plot_layout(title_text="Z-Score Anomaly Distribution")
-        lay_z["height"] = 280
-        lay_z["xaxis"]["title"] = "Beat Number"
-        lay_z["yaxis"]["title"] = "Z-Score"
-        fig_z.update_layout(**lay_z)
+        set_layout(fig_z, "Z-Score Anomaly Distribution", xaxis_title="Beat Number", yaxis_title="Z-Score")
+        fig_z.update_layout(height=280)
         st.plotly_chart(fig_z, use_container_width=True)
 
         if n_anomaly > 0:
@@ -158,11 +156,8 @@ def main():
                 x=arr, nbinsx=40, name=lbl,
                 marker_color=color,
                 marker_line=dict(color=COLORS["outline_variant"], width=0.5)))
-            lh = get_plot_layout(title_text=f"{lbl} Histogram")
-            lh["height"] = 260
-            lh["xaxis"]["title"] = "RR (s)"
-            lh["yaxis"]["title"] = "Count"
-            fh.update_layout(**lh)
+            set_layout(fh, f"{lbl} Histogram", xaxis_title="RR (s)", yaxis_title="Count")
+            fh.update_layout(height=260)
             st.plotly_chart(fh, use_container_width=True)
 
     # ── Clinical notes ────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
                                pipeline_status_bar, kpi_card, section_header,
-                               clinical_interpretation, COLORS, get_plot_layout)
+                               clinical_interpretation, COLORS, get_plot_layout, set_layout)
 from components.sidebar_settings import render_sidebar_settings
 from utils.hrv_analysis import (get_time_domain_hrv, get_freq_domain_hrv,
                                  interpret_hrv, analyze_hrv_trend)
@@ -94,11 +94,8 @@ def main():
         fig.add_hline(y=50, line_dash="dot", line_color=COLORS["secondary_fixed"],
                       annotation_text="NN50 threshold (50 ms)",
                       annotation_font=dict(color=COLORS["secondary_fixed"], size=10))
-        lay = get_plot_layout(title_text="Successive RR Differences (|ΔRR|)")
-        lay["height"] = 280
-        lay["xaxis"]["title"] = "Beat Number"
-        lay["yaxis"]["title"] = "|ΔRR| (ms)"
-        fig.update_layout(**lay)
+        set_layout(fig, "Successive RR Differences (|ΔRR|)", xaxis_title="Beat Number", yaxis_title="|ΔRR| (ms)")
+        fig.update_layout(height=280)
         st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
         # ── HRV Trend (sliding window) ────────────────────────────────────────
@@ -116,11 +113,8 @@ def main():
                 mode='lines+markers', name='RMSSD',
                 line=dict(color=COLORS["primary_dim"], width=2),
                 marker=dict(size=5)))
-            lay_t = get_plot_layout(title_text="HRV Trend Analysis (SDNN / RMSSD)")
-            lay_t["height"] = 260
-            lay_t["xaxis"]["title"] = "Beat Centre"
-            lay_t["yaxis"]["title"] = "ms"
-            fig_t.update_layout(**lay_t)
+            set_layout(fig_t, "HRV Trend Analysis (SDNN / RMSSD)", xaxis_title="Beat Centre", yaxis_title="ms")
+            fig_t.update_layout(height=260)
             st.plotly_chart(fig_t, use_container_width=True)
         else:
             st.info("Need ≥ 60 beats for trend analysis.")
@@ -219,12 +213,8 @@ def main():
                 text=label, showarrow=False,
                 font=dict(color=color, size=10))
 
-        lay_p = get_plot_layout(title_text="Welch's Power Spectral Density")
-        lay_p["height"] = 420
-        lay_p["xaxis"]["title"] = "Frequency (Hz)"
-        lay_p["xaxis"]["range"] = [0, 0.5]
-        lay_p["yaxis"]["title"] = "PSD (ms²/Hz)"
-        fig_p.update_layout(**lay_p)
+        set_layout(fig_p, "Welch's Power Spectral Density", xaxis_title="Frequency (Hz)", yaxis_title="PSD (ms²/Hz)")
+        fig_p.update_layout(height=420, xaxis=dict(range=[0, 0.5]))
         st.plotly_chart(fig_p, use_container_width=True)
 
         # Clinical cards

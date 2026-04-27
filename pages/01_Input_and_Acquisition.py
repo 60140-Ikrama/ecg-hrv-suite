@@ -6,7 +6,7 @@ import sys, os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
-                               pipeline_status_bar, kpi_card, COLORS, get_plot_layout)
+                               pipeline_status_bar, kpi_card, COLORS, get_plot_layout, set_layout)
 from components.sidebar_settings import render_sidebar_settings
 from utils.data_loader import load_ecg_file
 from utils.signal_processing import compute_sqi
@@ -198,13 +198,8 @@ def main():
         x=t[::step], y=signal[::step], mode='lines', name='Raw ECG',
         line=dict(color=COLORS["outline"], width=1.2),
         hovertemplate="t=%{x:.3f}s  amp=%{y:.4f}<extra>Raw ECG</extra>"))
-    layout = get_plot_layout()
-    layout["title"]  = dict(text=f"Raw ECG — {selected}",
-                             font=dict(family="Manrope", color=COLORS["primary"], size=13))
-    layout["xaxis"]["title"] = "Time (s)"
-    layout["yaxis"]["title"] = "Amplitude"
-    layout["height"] = 400
-    fig.update_layout(**layout)
+    set_layout(fig, f"Raw ECG — {selected}", xaxis_title="Time (s)", yaxis_title="Amplitude")
+    fig.update_layout(height=400)
     st.plotly_chart(fig, use_container_width=True,
                     config={"displayModeBar": True, "scrollZoom": True})
 

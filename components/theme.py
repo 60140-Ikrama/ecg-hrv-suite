@@ -46,7 +46,7 @@ PLOTLY_LAYOUT = dict(
     paper_bgcolor=COLORS["surface_container_lowest"],
     plot_bgcolor=COLORS["surface_container_lowest"],
     font=dict(family="Inter, sans-serif", color=COLORS["on_surface_variant"], size=11),
-    title=dict(text="", font=dict(family="Manrope, sans-serif", color=COLORS["primary"], size=14)),
+    # Removed default title key to prevent "multiple values for keyword argument 'title'" errors
     margin=dict(l=50, r=20, t=50, b=50),
     xaxis=dict(
         gridcolor=COLORS["outline_variant"],
@@ -707,27 +707,54 @@ def kpi_card(label: str, value: str, unit: str = "", accent: str = "primary", ba
 def get_plot_layout(title_text: str = None, **overrides) -> dict:
     """
     Return a deep copy of PLOTLY_LAYOUT, optionally merged with overrides.
-    Use this instead of `{**PLOTLY_LAYOUT}` to avoid shared nested-dict mutation.
-    Safely handles title_text to prevent "undefined" graph titles.
     """
     layout = copy.deepcopy(PLOTLY_LAYOUT)
-    
-    # Safe Title Logic
     if title_text is not None:
         layout["title"] = dict(
             text=title_text if title_text.strip() else "Analysis Plot", 
             font=dict(family="Manrope, sans-serif", color=COLORS["primary"], size=14)
         )
-    elif "title" not in overrides:
-        # Default fallback if nothing is passed
-        layout["title"] = dict(
-            text="Analysis Plot", 
-            font=dict(family="Manrope, sans-serif", color=COLORS["primary"], size=14)
-        )
-        
     for k, v in overrides.items():
         layout[k] = v
     return layout
+
+def set_layout(fig, title_text, xaxis_title="Time (s)", yaxis_title="Amplitude"):
+    """
+    Helper function to apply clinical sentinel theme and titles to a figure.
+    Fixes the 'multiple values for keyword argument title' Plotly error.
+    """
+    fig.update_layout(
+        **PLOTLY_LAYOUT,
+        title=dict(
+            text=title_text,
+            font=dict(family="Manrope, sans-serif", color=COLORS["primary"], size=14)
+        ),
+        xaxis_title=xaxis_title,
+        yaxis_title=yaxis_title,
+        template="plotly_dark" # Base template as requested, overrides follow
+    )
+    # Re-apply some theme specifics that template might override
+    fig.update_layout(
+        paper_bgcolor=COLORS["surface_container_lowest"],
+        plot_bgcolor=COLORS["surface_container_lowest"],
+    )
+    return fig
+
+def save_all_figures(filename, charts_dict):
+    """
+    Helper to save charts as static images for reporting.
+    """
+    import os
+    if not os.path.exists("reports/temp_plots"):
+        os.makedirs("reports/temp_plots", exist_ok=True)
+    
+    paths = {}
+    for key, img_bytes in charts_dict.items():
+        path = f"reports/temp_plots/{filename}_{key}.png"
+        with open(path, "wb") as f:
+            f.write(img_bytes)
+        paths[key] = path
+    return paths
 
 
 def section_header(title: str):
