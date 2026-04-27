@@ -8,7 +8,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
                                pipeline_status_bar, section_header,
-                               COLORS, get_plot_layout, set_layout)
+                               COLORS, get_plot_layout, set_layout, hex_to_rgba)
 from components.sidebar_settings import render_sidebar_settings
 
 st.set_page_config(page_title="Multi-File Comparison · Clinical Sentinel",
@@ -149,7 +149,7 @@ def main():
             r=vals_norm + [vals_norm[0]],          # close the polygon
             theta=radar_keys + [radar_keys[0]],
             fill='toself',
-            fillcolor=PALETTE[i % len(PALETTE)].replace("#", "rgba(") + ",0.15)",
+            fillcolor=hex_to_rgba(PALETTE[i % len(PALETTE)], 0.15),
             name=name,
             line=dict(color=PALETTE[i % len(PALETTE)], width=2)))
 

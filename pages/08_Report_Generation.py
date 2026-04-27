@@ -12,7 +12,7 @@ from components.theme import (inject_stitch_theme, sentinel_header,
                                pipeline_status_bar, section_header, COLORS, 
                                PLOTLY_LAYOUT, set_layout, save_all_figures)
 from components.sidebar_settings import render_sidebar_settings
-from utils.hrv_analysis import interpret_hrv
+from utils.hrv_analysis import interpret_hrv, detrended_fluctuation_analysis
 
 st.set_page_config(page_title="Report Generation · Clinical Sentinel",
                    page_icon="📑", layout="wide")
@@ -178,6 +178,29 @@ def _generate_report_charts(filename: str) -> dict:
         try: charts["poincare"] = fig.to_image(format="png", width=500, height=500, engine="kaleido")
         except: pass
 
+    # 7. DFA Plot
+    if clean_rr is not None and len(clean_rr) > 32:
+        dfa_res = detrended_fluctuation_analysis(clean_rr)
+        scales, fluct = dfa_res.get("scales", []), dfa_res.get("fluct", [])
+        if len(scales) > 3:
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=np.log10(scales), y=np.log10(fluct), mode='markers+lines', marker=dict(color=COLORS["primary_dim"])))
+            
+            # Add short-term alpha1 line
+            a1 = dfa_res.get("alpha1")
+            if a1 and np.isfinite(a1):
+                mask = (scales >= 4) & (scales <= 16)
+                if np.sum(mask) >= 2:
+                    lx = np.log10(scales[mask])
+                    ly = np.log10(fluct[mask])
+                    c = np.polyfit(lx, ly, 1)
+                    x_line = np.array([lx.min(), lx.max()])
+                    fig.add_trace(go.Scatter(x=x_line, y=np.polyval(c, x_line), mode='lines', name=f"α1={a1:.2f}", line=dict(color=COLORS["secondary_fixed"], dash='dash')))
+            
+            set_layout(fig, "Detrended Fluctuation Analysis (DFA)", xaxis_title="log10(Scale n)", yaxis_title="log10(F(n))")
+            try: charts["dfa"] = fig.to_image(format="png", width=800, height=350, engine="kaleido")
+            except: pass
+
     return charts
 
 def _safe(v):
@@ -219,48 +242,103 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
     story = [Paragraph("ECG & HRV Analysis Report", h1), Spacer(1, 1*cm)]
     
     for fname, m in metrics_dict.items():
+        sqi = sqi_cache.get(fname, {})
         story.append(Paragraph(f"Analysis for File: {fname}", h2))
         
-        # Mandatory Table: Time-Domain
+        # Section: Global Summary
+        story.append(Paragraph("<b>Global Analysis Summary</b>", body))
+        summary_data = [
+            ["Metric", "Value", "Clinical Significance"],
+            ["Mean HR", f"{m.get('Mean HR (bpm)', 'N/A')}", "Average Heart Rate"],
+            ["SDNN", _safe(m.get('SDNN (ms)')), "Overall Autonomic Regulation"],
+            ["RMSSD", _safe(m.get('RMSSD (ms)')), "Parasympathetic Activity (Vagal Tone)"],
+            ["LF/HF Ratio", _safe(m.get('LF/HF Ratio')), "Sympathovagal Balance"],
+            ["Signal Quality", sqi.get('quality_label', 'N/A'), f"SQI: {sqi.get('overall_sqi','N/A')}"]
+        ]
+        t_sum = Table(summary_data, colWidths=[4*cm, 4*cm, 8*cm])
+        t_sum.setStyle(TableStyle([
+            ('GRID', (0,0), (-1,-1), 0.5, rl_colors.grey),
+            ('BACKGROUND', (0,0), (-1,0), rl_colors.HexColor("#d5e8f7")),
+            ('FONTNAME', (0,0), (-1,0), FONT_NAME + "-Bold" if FONT_NAME != "Helvetica" else "Helvetica-Bold"),
+        ]))
+        story.append(t_sum)
+        story.append(Spacer(1, 0.6*cm))
+
+        # Section: Time-Domain
         story.append(Paragraph("Time-Domain Metrics", body))
-        data = [["Metric", "Value"]]
-        for k in ["Mean RR", "SDNN", "RMSSD", "NN50", "pNN50"]:
-            # Handle key mapping
-            val = m.get(k) or m.get(k+" (ms)") or m.get(k+" (%)")
-            data.append([k, _safe(val)])
-        t = Table(data, colWidths=[8*cm, 8*cm])
+        data = [["Metric", "Value", "Unit"]]
+        for k, unit in [("Mean RR", "ms"), ("SDNN", "ms"), ("RMSSD", "ms"), ("NN50", "beats"), ("pNN50", "%")]:
+            val = m.get(k) or m.get(k+" (ms)") or m.get(k+" (%)") or m.get(k+" (beats)")
+            data.append([k, _safe(val), unit])
+        t = Table(data, colWidths=[6*cm, 5*cm, 5*cm])
         t.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, rl_colors.grey), ('BACKGROUND', (0,0), (-1,0), rl_colors.lightgrey)]))
         story.append(t)
         story.append(Spacer(1, 0.5*cm))
 
-        # Mandatory Table: Frequency-Domain
-        story.append(Paragraph("Frequency-Domain Metrics", body))
-        data_f = [["Metric", "Value"]]
-        for k in ["LF Power", "HF Power", "LF/HF Ratio"]:
+        # Section: Frequency-Domain
+        story.append(Paragraph("Frequency-Domain Metrics (PSD)", body))
+        data_f = [["Metric", "Value", "Unit"]]
+        for k, unit in [("VLF Power", "ms²"), ("LF Power", "ms²"), ("HF Power", "ms²"), ("LF/HF Ratio", "ratio"), ("Total Power", "ms²")]:
             val = m.get(k) or m.get(k+" (ms2)") or m.get(k+" (ms²)")
-            data_f.append([k, _safe(val)])
-        t_f = Table(data_f, colWidths=[8*cm, 8*cm])
+            data_f.append([k, _safe(val), unit])
+        t_f = Table(data_f, colWidths=[6*cm, 5*cm, 5*cm])
         t_f.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, rl_colors.grey), ('BACKGROUND', (0,0), (-1,0), rl_colors.lightgrey)]))
         story.append(t_f)
         story.append(Spacer(1, 0.5*cm))
 
+        # Section: Non-Linear
+        story.append(Paragraph("Non-Linear HRV Metrics", body))
+        data_nl = [["Metric", "Value", "Description"]]
+        for k, desc in [("SD1", "Short-term variability"), ("SD2", "Long-term variability"), 
+                        ("SD1/SD2", "Short/Long term ratio"), ("DFA α1", "Short-term fractal exponent"),
+                        ("Sample Entropy", "Signal complexity")]:
+            val = m.get(k) or m.get(k+" (ms)") or m.get(k+" (ms2)")
+            data_nl.append([k, _safe(val), desc])
+        t_nl = Table(data_nl, colWidths=[4*cm, 4*cm, 8*cm])
+        t_nl.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, rl_colors.grey), ('BACKGROUND', (0,0), (-1,0), rl_colors.lightgrey)]))
+        story.append(t_nl)
+        story.append(Spacer(1, 0.5*cm))
+
         # Interpretation
-        story.append(Paragraph("Clinical Interpretation", body))
+        story.append(Paragraph("<b>Detailed Clinical Assessment</b>", body))
         interp = interpret_hrv(m, m)
-        story.append(Paragraph(f"• <b>HF (Parasympathetic):</b> {interp.get('autonomic','N/A')}", body))
-        story.append(Paragraph(f"• <b>LF (Sympathetic):</b> Assessed via LF power component", body))
-        story.append(Paragraph(f"• <b>LF/HF (Autonomic Balance):</b> {interp.get('lf_hf_class','N/A')}", body))
+        assess_text = (
+            f"The analyzed signal for <b>{fname}</b> shows an {interp.get('sdnn_class','—')}. "
+            f"Regarding vagal regulation, the findings indicate a {interp.get('autonomic','—').lower()}. "
+            f"The sympathovagal balance, as measured by the LF/HF ratio, suggests {interp.get('lf_hf_class','—').lower()}."
+        )
+        story.append(Paragraph(assess_text, body))
+        story.append(Spacer(1, 0.5*cm))
+
+        # Physiology Reference Table
+        story.append(Paragraph("<b>Physiology Reference Guide (Normal Resting Ranges)</b>", body))
+        ref_data = [
+            ["Metric", "Normal Range", "Clinical Relevance"],
+            ["HR (Mean)", "60 - 100 bpm", "Resting heart rate"],
+            ["SDNN", "50 - 100 ms", "Overall autonomic health"],
+            ["RMSSD", "20 - 50 ms", "Vagal tone / recovery"],
+            ["LF/HF Ratio", "1.0 - 2.0", "Sympathovagal balance"],
+            ["DFA α1", "0.9 - 1.2", "Healthy fractal scaling"]
+        ]
+        t_ref = Table(ref_data, colWidths=[4*cm, 4*cm, 8*cm])
+        t_ref.setStyle(TableStyle([
+            ('GRID', (0,0), (-1,-1), 0.5, rl_colors.grey),
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('BACKGROUND', (0,0), (-1,0), rl_colors.whitesmoke)
+        ]))
+        story.append(t_ref)
         story.append(Spacer(1, 1*cm))
 
         # MANDATORY GRAPHS
         charts = _generate_report_charts(fname)
         chart_order = [
-            ("ecg_raw_filt", "1. ECG Signal (Raw vs Filtered)"),
-            ("rpeaks", "2. R-Peak Detection Overlay"),
-            ("rr_tachogram", "3. RR Tachogram"),
-            ("ectopic_corr", "4. Ectopic Correction (Raw vs Clean RR)"),
-            ("psd", "5. PSD (Frequency Domain)"),
-            ("poincare", "6. Poincaré Plot (Non-linear)")
+            ("ecg_raw_filt", "Figure 1: ECG Signal (Raw vs Filtered)"),
+            ("rpeaks", "Figure 2: R-Peak Detection Overlay"),
+            ("rr_tachogram", "Figure 3: RR Tachogram (Interval Variation)"),
+            ("ectopic_corr", "Figure 4: Ectopic Beat Correction"),
+            ("psd", "Figure 5: Power Spectral Density (LF/HF Bands)"),
+            ("poincare", "Figure 6: Poincaré Plot (Non-linear Scatter)"),
+            ("dfa", "Figure 7: Detrended Fluctuation Analysis (DFA)")
         ]
         
         for ckey, clabel in chart_order:
@@ -269,9 +347,12 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
                     tmp.write(charts[ckey])
                     tpath = tmp.name
-                story.append(RLImage(tpath, width=16*cm, height=7*cm if ckey != "poincare" else 12*cm))
+                # Adjust size for poincare and dfa to fit well
+                c_height = 6*cm
+                if ckey == "poincare": c_height = 10*cm
+                story.append(RLImage(tpath, width=16*cm, height=c_height))
                 _os.remove(tpath)
-                story.append(Spacer(1, 0.5*cm))
+                story.append(Spacer(1, 0.4*cm))
         
         story.append(PageBreak())
 
@@ -289,9 +370,16 @@ def build_docx_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> by
     for fname, m in metrics_dict.items():
         doc.add_heading(f"Analysis: {fname}", level=1)
         
+        # Global Summary
+        doc.add_heading("Global ECG Summary", level=2)
+        doc.add_paragraph(f"Mean Heart Rate: {m.get('Mean HR (bpm)', 'N/A')} bpm")
+        doc.add_paragraph(f"SDNN (Overall HRV): {_safe(m.get('SDNN (ms)'))} ms")
+        doc.add_paragraph(f"RMSSD (Vagal Tone): {_safe(m.get('RMSSD (ms)'))} ms")
+        
+        charts = _generate_report_charts(fname)
+        
         # 1. ECG Signal Section
         doc.add_heading("1. ECG Signal (Raw vs Filtered)", level=2)
-        charts = _generate_report_charts(fname)
         if "ecg_raw_filt" in charts:
             doc.add_picture(io.BytesIO(charts["ecg_raw_filt"]), width=Inches(6))
 
@@ -306,7 +394,7 @@ def build_docx_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> by
             doc.add_picture(io.BytesIO(charts["rr_tachogram"]), width=Inches(6))
 
         # 4. Ectopic Correction
-        doc.add_heading("4. Ectopic Beat Correction (Raw vs Clean)", level=2)
+        doc.add_heading("4. Ectopic Beat Correction", level=2)
         if "ectopic_corr" in charts:
             doc.add_picture(io.BytesIO(charts["ectopic_corr"]), width=Inches(6))
 
@@ -316,19 +404,26 @@ def build_docx_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> by
             doc.add_picture(io.BytesIO(charts["psd"]), width=Inches(6))
 
         # 6. Non-linear HRV
-        doc.add_heading("6. Non-linear HRV (Poincaré)", level=2)
+        doc.add_heading("6. Non-linear HRV (Poincaré & DFA)", level=2)
         if "poincare" in charts:
             doc.add_picture(io.BytesIO(charts["poincare"]), width=Inches(4))
+        if "dfa" in charts:
+            doc.add_picture(io.BytesIO(charts["dfa"]), width=Inches(6))
 
         # Tables
-        doc.add_heading("Metrics Summary", level=2)
+        doc.add_heading("Full Metrics Summary", level=2)
         table = doc.add_table(rows=1, cols=2)
         table.style = 'Table Grid'
         hdr_cells = table.rows[0].cells
         hdr_cells[0].text = 'Metric'
         hdr_cells[1].text = 'Value'
         
-        for k in ["Mean RR", "SDNN", "RMSSD", "NN50", "pNN50", "LF Power", "HF Power", "LF/HF Ratio"]:
+        metrics_to_list = [
+            "Mean RR", "SDNN", "RMSSD", "NN50", "pNN50", 
+            "LF Power", "HF Power", "LF/HF Ratio",
+            "SD1", "SD2", "DFA α1", "Sample Entropy"
+        ]
+        for k in metrics_to_list:
             val = m.get(k) or m.get(k+" (ms)") or m.get(k+" (%)") or m.get(k+" (ms2)") or m.get(k+" (ms²)")
             row_cells = table.add_row().cells
             row_cells[0].text = k
@@ -337,9 +432,9 @@ def build_docx_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> by
         # Interpretation
         doc.add_heading("Clinical Interpretation", level=2)
         interp = interpret_hrv(m, m)
-        doc.add_paragraph(f"• HF (Parasympathetic activity): {interp.get('autonomic','N/A')}")
-        doc.add_paragraph(f"• LF (Sympathetic activity): Assessed via LF power component.")
-        doc.add_paragraph(f"• LF/HF (Autonomic balance): {interp.get('lf_hf_class','N/A')}")
+        doc.add_paragraph(f"Analysis Status: {interp.get('sdnn_class','—')}")
+        doc.add_paragraph(f"Vagal Activity: {interp.get('autonomic','—')}")
+        doc.add_paragraph(f"Sympathovagal Balance: {interp.get('lf_hf_class','—')}")
 
     buf = io.BytesIO()
     doc.save(buf)
