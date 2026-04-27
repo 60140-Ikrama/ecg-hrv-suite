@@ -761,6 +761,22 @@ def section_header(title: str):
     st.markdown(f'<div class="section-header">{title}</div>', unsafe_allow_html=True)
 
 
+def hex_to_rgba(hex_str: str, opacity: float = 1.0) -> str:
+    """
+    Convert hex color (#RRGGBB or #RGB) to rgba(r, g, b, a) for Plotly/CSS.
+    """
+    hex_str = hex_str.lstrip('#')
+    if len(hex_str) == 3:
+        hex_str = ''.join([c*2 for c in hex_str])
+    try:
+        r = int(hex_str[0:2], 16)
+        g = int(hex_str[2:4], 16)
+        b = int(hex_str[4:6], 16)
+        return f"rgba({r}, {g}, {b}, {opacity})"
+    except (ValueError, IndexError):
+        return f"rgba(0, 0, 0, {opacity})"
+
+
 def clinical_interpretation(text: str, kind: str = "info"):
     """Render a clinical interpretation card."""
     cls = {"warning": "warning", "success": "success"}.get(kind, "")
