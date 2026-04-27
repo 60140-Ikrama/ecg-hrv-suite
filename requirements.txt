@@ -6,6 +6,6 @@ plotly
 neurokit2
 PyWavelets
 mne
-fpdf2
+reportlab
 python-docx
 kaleido

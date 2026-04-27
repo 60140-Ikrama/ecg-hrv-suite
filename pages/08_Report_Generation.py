@@ -205,57 +205,306 @@ def _generate_report_charts(filename: str) -> dict:
         except: pass
         
     # 3. PSD
-    psd_dict = st.session_state.get("psd_data", {}).get(filename)
-    if psd_dict:
-        fig_psd = go.Figure()
-        fig_psd.add_trace(go.Scatter(x=psd_dict["f"], y=psd_dict["psd"], fill='tozeroy', line=dict(color=COLORS["secondary_fixed"])))
-        fig_psd.update_layout(title="Welch Power Spectral Density", showlegend=False, **PLOTLY_LAYOUT)
-        try: charts["psd"] = fig_psd.to_image(format="png", width=800, height=350, engine="kaleido")
-        except: pass
+    psd_raw = st.session_state.get("psd_data", {}).get(filename)
+    if psd_raw is not None:
+        try:
+            freqs_p, psd_p = psd_raw
+            fig_psd = go.Figure()
+            fig_psd.add_trace(go.Scatter(x=freqs_p, y=psd_p, fill="tozeroy",
+                                         line=dict(color=COLORS["secondary_fixed"])))
+            fig_psd.update_layout(title="Welch PSD", showlegend=False, **PLOTLY_LAYOUT)
+            charts["psd"] = fig_psd.to_image(format="png", width=800, height=350, engine="kaleido")
+        except Exception as _e:
+            print("PSD chart err:", _e)
         
-    return charts
+    # Poincare plot
+    rr_pc = st.session_state.get("clean_rr_intervals", {}).get(filename)
+    if rr_pc is not None and len(rr_pc) > 2:
+        try:
+            rn, rn1 = rr_pc[:-1], rr_pc[1:]
+            fig_pc = go.Figure()
+            fig_pc.add_trace(go.Scatter(x=rn, y=rn1, mode="markers",
+                                        marker=dict(color=COLORS["primary_dim"], size=4, opacity=0.5)))
+            fig_pc.update_layout(title="Poincare Plot", showlegend=False, **PLOTLY_LAYOUT)
+            charts["poincare"] = fig_pc.to_image(format="png", width=600, height=600, engine="kaleido")
+        except Exception as _e:
+            print("Poincare chart error:", _e)
+
+    # R-peaks chart
+    sig2 = st.session_state.get("cleaned_signals", {}).get(filename)
+    rpeaks2 = st.session_state.get("rpeaks", {}).get(filename)
+    if sig2 is not None and rpeaks2 is not None and len(rpeaks2):
+        try:
+            sfreq2 = st.session_state.get("sfreq", 250.0)
+            t2 = np.arange(len(sig2)) / sfreq2
+            mx = min(len(sig2), int(10 * sfreq2))
+            fig_rp = go.Figure()
+            fig_rp.add_trace(go.Scatter(x=t2[:mx], y=sig2[:mx], mode="lines",
+                                        line=dict(color=COLORS["secondary_fixed"], width=1)))
+            rp_in = rpeaks2[rpeaks2 < mx]
+            fig_rp.add_trace(go.Scatter(x=rp_in / sfreq2, y=sig2[rp_in], mode="markers",
+                                        marker=dict(color=COLORS["error"], size=8, symbol="triangle-up")))
+            fig_rp.update_layout(title="R-Peak Detection", showlegend=False, **PLOTLY_LAYOUT)
+            charts["rpeaks"] = fig_rp.to_image(format="png", width=800, height=350, engine="kaleido")
+        except Exception as _e:
+            print("R-peaks chart error:", _e)
+
+    # Poincare plot
+    rr_pc = st.session_state.get("clean_rr_intervals", {}).get(filename)
+    if rr_pc is not None and len(rr_pc) > 2:
+        try:
+            rn, rn1 = rr_pc[:-1], rr_pc[1:]
+            fig_pc = go.Figure()
+            fig_pc.add_trace(go.Scatter(x=rn.tolist(), y=rn1.tolist(), mode="markers",
+                marker=dict(color=COLORS["primary_dim"], size=4, opacity=0.5)))
+            fig_pc.update_layout(title="Poincare Plot", showlegend=False, **PLOTLY_LAYOUT)
+            charts["poincare"] = fig_pc.to_image(format="png", width=600, height=600, engine="kaleido")
+        except Exception as _e:
+            print("Poincare err:", _e)
+    # R-peaks chart
+    sig2 = st.session_state.get("cleaned_signals", {}).get(filename)
+    rpeaks2 = st.session_state.get("rpeaks", {}).get(filename)
+    if sig2 is not None and rpeaks2 is not None and len(rpeaks2):
+        try:
+            sfreq2 = st.session_state.get("sfreq", 250.0)
+            t2 = np.arange(len(sig2)) / sfreq2
+            mx = min(len(sig2), int(10 * sfreq2))
+            rp_in = rpeaks2[rpeaks2 < mx]
+            fig_rp = go.Figure()
+            fig_rp.add_trace(go.Scatter(x=t2[:mx].tolist(), y=sig2[:mx].tolist(),
+                mode="lines", line=dict(color=COLORS["secondary_fixed"], width=1)))
+            fig_rp.add_trace(go.Scatter(x=(rp_in/sfreq2).tolist(), y=sig2[rp_in].tolist(),
+                mode="markers", marker=dict(color=COLORS["error"], size=8, symbol="triangle-up")))
+            fig_rp.update_layout(title="R-Peak Detection", showlegend=False, **PLOTLY_LAYOUT)
+            charts["rpeaks"] = fig_rp.to_image(format="png", width=800, height=350, engine="kaleido")
+        except Exception as _e:
+            print("R-peaks err:", _e)
+        return charts
+
+def _safe(v):
+    """Format metric value safely."""
+    if isinstance(v, float):
+        return f"{v:.3f}"
+    if v is None:
+        return "N/A"
+    return str(v)
+
 
 def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> bytes:
-    from fpdf import FPDF
-    import tempfile
-    import os
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.cell(0, 10, "Clinical Sentinel - ECG & HRV Analysis Report", new_x="LMARGIN", new_y="NEXT", align='C')
-    pdf.set_font("Helvetica", '', 10)
-    pdf.cell(0, 10, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", new_x="LMARGIN", new_y="NEXT", align='C')
-    
+    import io as _io
+    import tempfile, os as _os
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors as rl_colors
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
+                                     Table, TableStyle, Image as RLImage, PageBreak)
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    # Register DejaVu for Unicode (if available), else use Helvetica with ASCII fallback
+    try:
+        import urllib.request, pathlib
+        dv_path = pathlib.Path(tempfile.gettempdir()) / "DejaVuSans.ttf"
+        if not dv_path.exists():
+            urllib.request.urlretrieve(
+                "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf",
+                str(dv_path))
+        pdfmetrics.registerFont(TTFont("DejaVu", str(dv_path)))
+        BODY_FONT, BOLD_FONT = "DejaVu", "DejaVu"
+    except Exception:
+        BODY_FONT, BOLD_FONT = "Helvetica", "Helvetica-Bold"
+
+    buf = _io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                             leftMargin=2*cm, rightMargin=2*cm,
+                             topMargin=2*cm, bottomMargin=2*cm)
+
+    styles = getSampleStyleSheet()
+    h1 = ParagraphStyle("h1", fontName=BOLD_FONT, fontSize=18, spaceAfter=8,
+                         textColor=rl_colors.HexColor("#003366"), leading=22)
+    h2 = ParagraphStyle("h2", fontName=BOLD_FONT, fontSize=13, spaceAfter=6,
+                         textColor=rl_colors.HexColor("#1a5276"), leading=16)
+    h3 = ParagraphStyle("h3", fontName=BOLD_FONT, fontSize=11, spaceAfter=4,
+                         textColor=rl_colors.HexColor("#2e86c1"), leading=14)
+    body = ParagraphStyle("body", fontName=BODY_FONT, fontSize=9,
+                           spaceAfter=4, leading=13)
+
+    tbl_style = TableStyle([
+        ("BACKGROUND",  (0,0), (-1,0), rl_colors.HexColor("#1a5276")),
+        ("TEXTCOLOR",   (0,0), (-1,0), rl_colors.white),
+        ("FONTNAME",    (0,0), (-1,0), BOLD_FONT),
+        ("FONTSIZE",    (0,0), (-1,-1), 9),
+        ("FONTNAME",    (0,1), (-1,-1), BODY_FONT),
+        ("BACKGROUND",  (0,1), (-1,-1), rl_colors.HexColor("#eaf4fc")),
+        ("ROWBACKGROUNDS", (0,1), (-1,-1),
+         [rl_colors.HexColor("#eaf4fc"), rl_colors.HexColor("#d6eaf8")]),
+        ("GRID",        (0,0), (-1,-1), 0.4, rl_colors.HexColor("#aed6f1")),
+        ("VALIGN",      (0,0), (-1,-1), "MIDDLE"),
+        ("TOPPADDING",  (0,0), (-1,-1), 4),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 4),
+        ("LEFTPADDING", (0,0), (-1,-1), 6),
+    ])
+
+    story = []
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # ── Title page ────────────────────────────────────────────────────────
+    story.append(Paragraph("Clinical Sentinel", h1))
+    story.append(Paragraph("ECG &amp; HRV Analysis Report", h1))
+    story.append(Spacer(1, 0.3*cm))
+    story.append(Paragraph(f"Generated: {ts}", body))
+    story.append(Paragraph("Research-Grade Suite v2.0  |  CLO2 &amp; CLO3", body))
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── Methodology ───────────────────────────────────────────────────────
+    story.append(Paragraph("1. Methodology", h2))
+    fnames_str = ", ".join(metrics_dict.keys())
+    meth_rows = [
+        ["Parameter", "Value"],
+        ["Files analysed", fnames_str],
+        ["Sampling frequency", f"{settings.get('sfreq', 250):.0f} Hz"],
+        ["Bandpass filter", f"{settings.get('lowcut', 0.5):.2f}-{settings.get('highcut', 40):.0f} Hz"],
+        ["Filter order", str(settings.get('filter_order', 4))],
+        ["R-Peak algorithm", str(settings.get('rpeak_method', 'NeuroKit'))],
+        ["Ectopic detection", str(settings.get('ectopic_method', 'median'))],
+        ["LF band", f"{settings.get('lf_min', 0.04):.2f}-{settings.get('lf_max', 0.15):.2f} Hz"],
+        ["HF band", f"{settings.get('hf_min', 0.15):.2f}-{settings.get('hf_max', 0.40):.2f} Hz"],
+        ["PSD method", "Welch"],
+        ["Non-linear", "Poincare, SampEn, ApEn, DFA alpha1/alpha2"],
+    ]
+    t = Table(meth_rows, colWidths=[5*cm, 11*cm])
+    t.setStyle(tbl_style)
+    story.append(t)
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── Per-file results ───────────────────────────────────────────────────
+    story.append(Paragraph("2. Results", h2))
+
     for fname, m in metrics_dict.items():
-        pdf.add_page()
-        pdf.set_font("Helvetica", 'B', 14)
-        pdf.cell(0, 10, f"File: {fname}", new_x="LMARGIN", new_y="NEXT")
-        
-        pdf.set_font("Helvetica", 'B', 12)
-        pdf.cell(0, 8, "Key Metrics", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_font("Helvetica", '', 10)
-        
-        for k in ["Mean HR (bpm)", "SDNN (ms)", "RMSSD (ms)", "LF/HF Ratio", "DFA α1"]:
-            if k in m:
-                v = m[k]
-                s = f"{v:.2f}" if isinstance(v, float) else str(v)
-                pdf.cell(0, 6, f"{k}: {s}", new_x="LMARGIN", new_y="NEXT")
-                
-        # Embed Charts
+        story.append(Paragraph(f"File: {fname}", h3))
+
+        # Time-domain table
+        td_rows = [["Metric", "Value"],
+                   ["Mean RR (ms)",  _safe(m.get("Mean RR (ms)"))],
+                   ["Mean HR (bpm)", _safe(m.get("Mean HR (bpm)"))],
+                   ["SDNN (ms)",     _safe(m.get("SDNN (ms)"))],
+                   ["RMSSD (ms)",    _safe(m.get("RMSSD (ms)"))],
+                   ["SDSD (ms)",     _safe(m.get("SDSD (ms)"))],
+                   ["NN50",          _safe(m.get("NN50"))],
+                   ["pNN50 (%)",     _safe(m.get("pNN50 (%)"))],
+                   ["CV (%)",        _safe(m.get("CV (%)"))]]
+        story.append(Paragraph("Time-Domain HRV Metrics", h3))
+        t1 = Table(td_rows, colWidths=[7*cm, 9*cm])
+        t1.setStyle(tbl_style)
+        story.append(t1)
+        story.append(Spacer(1, 0.3*cm))
+
+        # Frequency-domain table
+        if "LF Power (ms2)" in m or "LF Power (ms²)" in m:
+            lf_key  = "LF Power (ms²)" if "LF Power (ms²)" in m else "LF Power (ms2)"
+            hf_key  = "HF Power (ms²)" if "HF Power (ms²)" in m else "HF Power (ms2)"
+            vlf_key = "VLF Power (ms²)" if "VLF Power (ms²)" in m else "VLF Power (ms2)"
+            tp_key  = "Total Power (ms²)" if "Total Power (ms²)" in m else "Total Power (ms2)"
+            fd_rows = [["Metric", "Value"],
+                       ["VLF Power (ms2)", _safe(m.get(vlf_key))],
+                       ["LF Power (ms2)",  _safe(m.get(lf_key))],
+                       ["HF Power (ms2)",  _safe(m.get(hf_key))],
+                       ["LF/HF Ratio",     _safe(m.get("LF/HF Ratio"))],
+                       ["Total Power",     _safe(m.get(tp_key))],
+                       ["LF norm (%)",     _safe(m.get("LF norm (%)"))],
+                       ["HF norm (%)",     _safe(m.get("HF norm (%)"))]]
+            story.append(Paragraph("Frequency-Domain HRV Metrics", h3))
+            t2 = Table(fd_rows, colWidths=[7*cm, 9*cm])
+            t2.setStyle(tbl_style)
+            story.append(t2)
+            story.append(Spacer(1, 0.3*cm))
+
+        # Non-linear table
+        if "SD1 (ms)" in m:
+            nl_rows = [["Metric", "Value"],
+                       ["SD1 (ms)",           _safe(m.get("SD1 (ms)"))],
+                       ["SD2 (ms)",           _safe(m.get("SD2 (ms)"))],
+                       ["SD1/SD2",            _safe(m.get("SD1/SD2"))],
+                       ["Sample Entropy",     _safe(m.get("Sample Entropy"))],
+                       ["Approx Entropy",     _safe(m.get("Approx Entropy"))],
+                       ["DFA alpha1",         _safe(m.get("DFA α1") or m.get("DFA alpha1"))],
+                       ["DFA alpha2",         _safe(m.get("DFA α2") or m.get("DFA alpha2"))]]
+            story.append(Paragraph("Non-Linear HRV Metrics", h3))
+            t3 = Table(nl_rows, colWidths=[7*cm, 9*cm])
+            t3.setStyle(tbl_style)
+            story.append(t3)
+            story.append(Spacer(1, 0.3*cm))
+
+        # Charts
+        story.append(Paragraph("Signal Visualisations", h3))
         charts = _generate_report_charts(fname)
-        for cname, cbytes in charts.items():
-            if pdf.get_y() > 200: pdf.add_page()
-            # Save to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
-                tmp.write(cbytes)
-                tmp_path = tmp.name
-            pdf.image(tmp_path, w=180)
-            os.remove(tmp_path)
-            
-    res = pdf.output(dest='S')
-    if isinstance(res, str):
-        return res.encode('latin1')
-    return res
+        chart_labels = {
+            "ecg":     "ECG Waveform (first 10 s)",
+            "rpeaks":  "R-Peak Detection",
+            "rr":      "RR Interval Tachogram",
+            "psd":     "Power Spectral Density (Welch)",
+            "poincare":"Poincare Plot",
+        }
+        for ckey, cbytes in charts.items():
+            try:
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+                tmp.write(cbytes); tmp.close()
+                w = 14*cm if ckey == "poincare" else 16*cm
+                story.append(Paragraph(chart_labels.get(ckey, ckey), body))
+                story.append(RLImage(tmp.name, width=w, height=w*0.45 if ckey != "poincare" else w))
+                story.append(Spacer(1, 0.3*cm))
+                _os.unlink(tmp.name)
+            except Exception:
+                pass
+
+        story.append(PageBreak())
+
+    # ── Interpretation ────────────────────────────────────────────────────
+    story.append(Paragraph("3. Clinical Interpretation", h2))
+    from utils.hrv_analysis import interpret_hrv
+    for fname, m in metrics_dict.items():
+        interp = interpret_hrv(m, m)
+        lf_hf  = m.get("LF/HF Ratio")
+        a1     = m.get("DFA α1") or m.get("DFA alpha1")
+        story.append(Paragraph(f"File: {fname}", h3))
+        rows = [["Assessment", "Result"],
+                ["HRV Status (SDNN)",      interp.get("sdnn_class", "N/A")],
+                ["Vagal Tone (RMSSD)",     interp.get("autonomic",  "N/A")],
+                ["Sympathovagal (LF/HF)",  interp.get("lf_hf_class","N/A")],
+                ["LF/HF Value",            _safe(lf_hf)],
+                ["DFA alpha1",             _safe(a1)]]
+        ti = Table(rows, colWidths=[7*cm, 9*cm])
+        ti.setStyle(tbl_style)
+        story.append(ti)
+        story.append(Spacer(1, 0.4*cm))
+
+    # ── Physiology background ─────────────────────────────────────────────
+    story.append(Paragraph("4. HRV Physiology Background", h2))
+    bg_rows = [["LF/HF Ratio", "Interpretation"],
+               ["> 2.0",  "Sympathetic dominance (stress / upright posture)"],
+               ["1.0-2.0","Balanced autonomic modulation"],
+               ["< 1.0",  "Parasympathetic dominance (rest / recovery)"]]
+    tb = Table(bg_rows, colWidths=[4*cm, 12*cm])
+    tb.setStyle(tbl_style)
+    story.append(tb)
+    story.append(Spacer(1, 0.3*cm))
+    dfa_rows = [["DFA alpha1 Range", "Interpretation"],
+                ["< 0.5",  "Uncorrelated (white noise) - very low HRV"],
+                ["0.5-1.0","Long-range correlations - healthy HRV"],
+                ["~1.0",   "1/f (pink noise) - optimal cardiac complexity"],
+                ["> 1.5",  "Over-correlated (Brownian noise) - pathological"]]
+    td2 = Table(dfa_rows, colWidths=[4*cm, 12*cm])
+    td2.setStyle(tbl_style)
+    story.append(td2)
+    story.append(Spacer(1, 0.3*cm))
+    story.append(Paragraph(
+        "Report generated by Clinical Sentinel ECG &amp; HRV Analysis Suite v2.0  |  "
+        "Algorithms: Pan-Tompkins (custom), Welch PSD, DFA, SampEn, ApEn, Poincare (CLO1 &amp; CLO2)",
+        body))
+
+    doc.build(story)
+    return buf.getvalue()
 
 def build_docx_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> bytes:
     import docx
