@@ -191,7 +191,7 @@ def _generate_report_charts(filename: str) -> dict:
         max_idx = min(len(sig), int(10 * sfreq))
         fig_ecg = go.Figure()
         fig_ecg.add_trace(go.Scatter(x=t[:max_idx], y=sig[:max_idx], line=dict(color=COLORS["primary"])))
-        fig_ecg.update_layout(title="ECG Waveform (First 10s)", showlegend=False, **PLOTLY_LAYOUT)
+        fig_ecg.update_layout(**{**PLOTLY_LAYOUT, "title": "ECG Waveform (First 10s)", "showlegend": False})
         try: charts["ecg"] = fig_ecg.to_image(format="png", width=800, height=350, engine="kaleido")
         except: pass
         
@@ -200,7 +200,7 @@ def _generate_report_charts(filename: str) -> dict:
     if rr is not None and len(rr) > 0:
         fig_rr = go.Figure()
         fig_rr.add_trace(go.Scatter(y=rr, mode='lines+markers', line=dict(color=COLORS["primary_dim"])))
-        fig_rr.update_layout(title="RR Interval Tachogram", showlegend=False, **PLOTLY_LAYOUT)
+        fig_rr.update_layout(**{**PLOTLY_LAYOUT, "title": "RR Interval Tachogram", "showlegend": False})
         try: charts["rr"] = fig_rr.to_image(format="png", width=800, height=350, engine="kaleido")
         except: pass
         
@@ -212,7 +212,7 @@ def _generate_report_charts(filename: str) -> dict:
             fig_psd = go.Figure()
             fig_psd.add_trace(go.Scatter(x=freqs_p, y=psd_p, fill="tozeroy",
                                          line=dict(color=COLORS["secondary_fixed"])))
-            fig_psd.update_layout(title="Welch PSD", showlegend=False, **PLOTLY_LAYOUT)
+            fig_psd.update_layout(**{**PLOTLY_LAYOUT, "title": "Welch PSD", "showlegend": False})
             charts["psd"] = fig_psd.to_image(format="png", width=800, height=350, engine="kaleido")
         except Exception as _e:
             print("PSD chart err:", _e)
@@ -225,7 +225,7 @@ def _generate_report_charts(filename: str) -> dict:
             fig_pc = go.Figure()
             fig_pc.add_trace(go.Scatter(x=rn, y=rn1, mode="markers",
                                         marker=dict(color=COLORS["primary_dim"], size=4, opacity=0.5)))
-            fig_pc.update_layout(title="Poincare Plot", showlegend=False, **PLOTLY_LAYOUT)
+            fig_pc.update_layout(**{**PLOTLY_LAYOUT, "title": "Poincare Plot", "showlegend": False})
             charts["poincare"] = fig_pc.to_image(format="png", width=600, height=600, engine="kaleido")
         except Exception as _e:
             print("Poincare chart error:", _e)
@@ -244,7 +244,7 @@ def _generate_report_charts(filename: str) -> dict:
             rp_in = rpeaks2[rpeaks2 < mx]
             fig_rp.add_trace(go.Scatter(x=rp_in / sfreq2, y=sig2[rp_in], mode="markers",
                                         marker=dict(color=COLORS["error"], size=8, symbol="triangle-up")))
-            fig_rp.update_layout(title="R-Peak Detection", showlegend=False, **PLOTLY_LAYOUT)
+            fig_rp.update_layout(**{**PLOTLY_LAYOUT, "title": "R-Peak Detection", "showlegend": False})
             charts["rpeaks"] = fig_rp.to_image(format="png", width=800, height=350, engine="kaleido")
         except Exception as _e:
             print("R-peaks chart error:", _e)
@@ -257,7 +257,7 @@ def _generate_report_charts(filename: str) -> dict:
             fig_pc = go.Figure()
             fig_pc.add_trace(go.Scatter(x=rn.tolist(), y=rn1.tolist(), mode="markers",
                 marker=dict(color=COLORS["primary_dim"], size=4, opacity=0.5)))
-            fig_pc.update_layout(title="Poincare Plot", showlegend=False, **PLOTLY_LAYOUT)
+            fig_pc.update_layout(**{**PLOTLY_LAYOUT, "title": "Poincare Plot", "showlegend": False})
             charts["poincare"] = fig_pc.to_image(format="png", width=600, height=600, engine="kaleido")
         except Exception as _e:
             print("Poincare err:", _e)
@@ -275,7 +275,7 @@ def _generate_report_charts(filename: str) -> dict:
                 mode="lines", line=dict(color=COLORS["secondary_fixed"], width=1)))
             fig_rp.add_trace(go.Scatter(x=(rp_in/sfreq2).tolist(), y=sig2[rp_in].tolist(),
                 mode="markers", marker=dict(color=COLORS["error"], size=8, symbol="triangle-up")))
-            fig_rp.update_layout(title="R-Peak Detection", showlegend=False, **PLOTLY_LAYOUT)
+            fig_rp.update_layout(**{**PLOTLY_LAYOUT, "title": "R-Peak Detection", "showlegend": False})
             charts["rpeaks"] = fig_rp.to_image(format="png", width=800, height=350, engine="kaleido")
         except Exception as _e:
             print("R-peaks err:", _e)
@@ -302,18 +302,29 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
 
-    # Register DejaVu for Unicode (if available), else use Helvetica with ASCII fallback
+    # Register a Unicode-capable font (Windows system fonts first, then matplotlib DejaVu)
+    import pathlib as _pl
+    BODY_FONT, BOLD_FONT = "Helvetica", "Helvetica-Bold"  # safe fallback
+    _font_candidates = [
+        r"C:\Windows\Fonts\calibri.ttf",
+        r"C:\Windows\Fonts\arial.ttf",
+        r"C:\Windows\Fonts\times.ttf",
+    ]
+    # Also try matplotlib bundled DejaVu
     try:
-        import urllib.request, pathlib
-        dv_path = pathlib.Path(tempfile.gettempdir()) / "DejaVuSans.ttf"
-        if not dv_path.exists():
-            urllib.request.urlretrieve(
-                "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf",
-                str(dv_path))
-        pdfmetrics.registerFont(TTFont("DejaVu", str(dv_path)))
-        BODY_FONT, BOLD_FONT = "DejaVu", "DejaVu"
+        import matplotlib
+        _mpl_fonts = _pl.Path(matplotlib.get_data_path()) / "fonts" / "ttf"
+        for _f in _mpl_fonts.glob("DejaVuSans*.ttf"):
+            _font_candidates.insert(0, str(_f))
     except Exception:
-        BODY_FONT, BOLD_FONT = "Helvetica", "Helvetica-Bold"
+        pass
+    for _fp in _font_candidates:
+        try:
+            pdfmetrics.registerFont(TTFont("UniFont", _fp))
+            BODY_FONT, BOLD_FONT = "UniFont", "UniFont"
+            break
+        except Exception:
+            continue
 
     buf = _io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4,
