@@ -11,6 +11,20 @@ Designed for rigorous academic evaluation (OEL Assignments), this suite seamless
 
 ---
 
+## 🎥 Application Demos
+
+Here is a quick look at the Clinical Sentinel in action:
+
+**1. Full Pipeline ECG & HRV Demo**
+https://github.com/60140-Ikrama/ecg-hrv-suite/raw/master/Demo/Recording_Demo_ecg_hrv.mp4
+
+**2. Application Settings & Configuration**
+https://github.com/60140-Ikrama/ecg-hrv-suite/raw/master/Demo/Recording%20ECGHRV_Setting_app.mp4
+
+*(Note: If videos do not play in the browser, you can download them directly from the `Demo/` folder in this repository).*
+
+---
+
 ## ✨ Key Features & Capabilities
 
 ### 🎛️ 1. Multi-Stage Filtering & Signal Quality (SQI)
@@ -37,11 +51,11 @@ Designed for rigorous academic evaluation (OEL Assignments), this suite seamless
 
 ### 📁 5. Batch Processing & Multi-File Comparison
 - Load and cache multiple ECG files (`.dat`, `.csv`, `.mat`, `.edf`, `.txt`).
-- **Dashboard 7 (Multi-File):** Automatically compares HRV metrics across all loaded files using Side-by-Side Bar Grids, Normalised Radar (Spider) Charts, and PSD Overlays.
+- **Dashboard 7 (Multi-File Comparison):** Automatically compares HRV metrics across all loaded files using Side-by-Side Bar Grids, Normalised Radar (Spider) Charts, PSD Overlays, and interactive **time-domain ECG Signal Overlays**.
 
 ### 📑 6. Automated Clinical Report Generation
-- **Dashboard 8 (Report Generation):** Instantly builds a comprehensive Markdown report incorporating signal methodology, multi-file metrics, and automated clinical physiological interpretations (e.g., Sympathovagal Balance, Autonomic Vagal Tone).
-- Exports available in `.md` (Report), `.csv` (Data), and `.txt` (Methodology).
+- **Dashboard 8 (Report Generation):** Instantly builds a comprehensive, professional clinical report incorporating signal methodology, multi-file metrics, and automated physiological interpretations (e.g., Sympathovagal Balance, Autonomic Vagal Tone).
+- **Rich Exports:** Download full reports natively in **PDF** (via ReportLab) and **DOCX** formats, including all Plotly charts (DFA, Poincaré, PSD, etc.) embedded directly into the document.
 
 ---
 
@@ -102,4 +116,14 @@ ecg-hrv-suite/
 
 ---
 
-*Developed for the Biomedical Signal Processing Open-Ended Lab (OEL). Built with Streamlit, Plotly, SciPy, and NumPy.*
+## ⚖️ License & Terms of Use
+
+> **PROPRIETARY AND CONFIDENTIAL**
+> 
+> This repository and all accompanying code, documentation, and media are the proprietary property of **Muhammad Ikrama**.
+> 
+> **All rights reserved.** Modification, distribution, and use of this software are strictly prohibited without prior explicit written permission from the author. For academic inquiries or to request permission to use this codebase, please contact the author directly.
+
+---
+
+*Developed for the Biomedical Signal Processing Open-Ended Lab (OEL). Built with Streamlit, Plotly, SciPy, NumPy, and ReportLab.*
