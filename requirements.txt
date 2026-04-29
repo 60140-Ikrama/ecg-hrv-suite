@@ -9,3 +9,6 @@ mne
 reportlab
 python-docx
 kaleido
+scikit-learn
+qrcode[pil]
+Pillow

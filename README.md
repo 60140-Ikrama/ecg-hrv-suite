@@ -1,19 +1,28 @@
 # 🩺 Clinical Sentinel — Advanced ECG & HRV Analysis Suite
 
-![Version](https://img.shields.io/badge/version-2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
 ![Streamlit](https://img.shields.io/badge/streamlit-1.30+-red.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-A high-performance, research-grade biomedical signal processing platform built for deep clinical insight and comparative analytics. 
+A high-performance, research-grade biomedical signal processing platform built for deep clinical insight, automated cardiovascular risk detection, and comparative analytics.
 
-Designed for rigorous academic evaluation (OEL Assignments), this suite seamlessly integrates a **ground-up implementation of the Pan-Tompkins algorithm (CLO1)**, robust ectopic beat handling, and advanced physiological interpretation metrics **(CLO2/CLO3)** into a stunning, modular 8-dashboard architecture.
+Designed for rigorous academic evaluation (OEL Assignments), this suite integrates a **ground-up implementation of the Pan-Tompkins algorithm (CLO1)**, robust ectopic beat handling, **heart disease detection (rule-based + ML)**, and advanced physiological interpretation **(CLO2/CLO3)** into a modular **11-dashboard architecture**.
+
+---
+
+## 🔗 Live App & Repository
+
+**🌐 Deployed App:** https://ecg-hrv-suite.streamlit.app
+
+**📦 GitHub:** https://github.com/60140-Ikrama/ecg-hrv-suite
+
+**QR Code:** Auto-generated and displayed live on the app home page footer — scan to open the repo on your phone.
 
 ---
 
 ## 🎥 Application Demos
-
-Here is a quick look at the Clinical Sentinel in action:
 
 **1. Full Pipeline ECG & HRV Demo**
 https://github.com/60140-Ikrama/ecg-hrv-suite/raw/master/Demo/Recording_Demo_ecg_hrv.mp4
@@ -21,41 +30,48 @@ https://github.com/60140-Ikrama/ecg-hrv-suite/raw/master/Demo/Recording_Demo_ecg
 **2. Application Settings & Configuration**
 https://github.com/60140-Ikrama/ecg-hrv-suite/raw/master/Demo/Recording%20ECGHRV_Setting_app.mp4
 
-*(Note: If videos do not play in the browser, you can download them directly from the `Demo/` folder in this repository).*
+*(Download from `Demo/` folder if browser won't play inline.)*
 
 ---
 
 ## ✨ Key Features & Capabilities
 
 ### 🎛️ 1. Multi-Stage Filtering & Signal Quality (SQI)
-- **Signal Quality Index (SQI):** Auto-evaluates Spectral Energy, Kurtosis, and Baseline drift to generate an automated 0–100 quality score (Excellent/Good/Acceptable/Poor) and SNR in dB.
-- **Adaptive Sub-QRS Filtering:** 40ms sliding window smoothing.
-- **Harmonic Powerline Notch:** 50Hz/60Hz modes with automated harmonic suppression.
-- **Dynamic Butterworth Bandpass:** Configurable filter order (2–5).
+- Spectral Energy, Kurtosis, Baseline drift → 0–100 quality score + SNR in dB.
+- Adaptive Sub-QRS Filtering, Harmonic Powerline Notch (50/60 Hz), Butterworth Bandpass.
 
 ### ❤️ 2. R-Peak Detection (Custom CLO1 Implementation)
-- **Pan-Tompkins (Custom):** From-scratch algorithmic implementation. Includes bandpass isolation, derivative, squaring, moving-window integration (150ms), and adaptive dual-thresholds.
-- **Multi-Method Comparison:** Runs Custom Pan-Tompkins, NeuroKit, original Pan-Tompkins, and Hamilton simultaneously, scoring agreement percentage (±50ms) against the primary method.
+- **Pan-Tompkins (Custom):** Built from scratch — bandpass, derivative, squaring, 150ms MWI, adaptive dual-thresholds.
+- **Multi-Method Comparison:** Custom, NeuroKit, original Pan-Tompkins, Hamilton — simultaneous scoring.
 
 ### ⏱️ 3. Ectopic Correction & Anomaly Engine
-- **Z-Score Anomaly Detection:** Classifies RR variations (e.g., Short RR/Tachycardia risk vs Long RR).
-- **Interpolation & Correction:** Multi-method detection (median/mean/combined) paired with Linear or Cubic Spline interpolation to eliminate PVCs and artifacts before HRV calculation.
+- Z-Score anomaly detection (Short RR/Tachycardia vs Long RR/Bradycardia).
+- Multi-method detection (median/mean/combined) + Linear or Cubic Spline interpolation.
 
 ### 📈 4. Comprehensive HRV Analytics
-- **Time-Domain:** Mean RR, SDNN, RMSSD, SDSD, NN50, pNN50, CV, and sliding-window **Trend Analysis**.
-- **Frequency-Domain:** VLF, LF, HF, LF/HF Ratio, and Total Power. Uses Welch's PSD method with configurable `nperseg` / `noverlap`.
-- **Non-Linear (Fractal & Entropy):** 
-  - **Poincaré Plot** (SD1, SD2, Area)
-  - **Sample Entropy (SampEn) & Approximate Entropy (ApEn)**
-  - **Detrended Fluctuation Analysis (DFA):** Computes short-term (α1) and long-term (α2) scaling exponents.
+- **Time-Domain:** Mean RR, SDNN, RMSSD, SDSD, NN50, pNN50, CV, sliding-window trend.
+- **Frequency-Domain:** VLF, LF, HF, LF/HF, Total Power — Welch's PSD, configurable bands.
+- **Non-Linear:** Poincaré (SD1, SD2), Sample Entropy, ApEn, DFA (α1, α2).
 
-### 📁 5. Batch Processing & Multi-File Comparison
-- Load and cache multiple ECG files (`.dat`, `.csv`, `.mat`, `.edf`, `.txt`).
-- **Dashboard 7 (Multi-File Comparison):** Automatically compares HRV metrics across all loaded files using Side-by-Side Bar Grids, Normalised Radar (Spider) Charts, PSD Overlays, and interactive **time-domain ECG Signal Overlays**.
+### 🫀 5. Heart Disease Detection *(NEW — v2.1)*
+- **Rule-Based Classifier:** Clinical HRV thresholds for SDNN, RMSSD, LF/HF Ratio, DFA α1, Mean HR, Ectopic Rate.
+- **ML-Enhanced Classifier:** Random Forest trained inline on synthetic HRV reference ranges — no external `.pkl` file required.
+- **Risk Output:** `Normal` / `Mild Risk` / `High Risk` with weighted risk score (0–100), confidence %, per-metric flags, and clinical explanation paragraph.
+- **Fully integrated into PDF reports** with risk assessment table.
 
-### 📑 6. Automated Clinical Report Generation
-- **Dashboard 8 (Report Generation):** Instantly builds a comprehensive, professional clinical report incorporating signal methodology, multi-file metrics, and automated physiological interpretations (e.g., Sympathovagal Balance, Autonomic Vagal Tone).
-- **Rich Exports:** Download full reports natively in **PDF** (via ReportLab) and **DOCX** formats, including all Plotly charts (DFA, Poincaré, PSD, etc.) embedded directly into the document.
+### 📁 6. Multi-File Analysis & Comparison (1 to 5+ files)
+- Side-by-side HRV bar grids, Radar (Spider) Charts, PSD Overlays, scatter concordance plots.
+- Statistical Δ difference tables between any two files.
+- Comparative risk score bar chart across all loaded files.
+
+### 📑 7. Automated Clinical Report Generation
+- **PDF** (ReportLab) + **DOCX** exports — full metrics, all charts, clinical interpretation, risk assessment.
+- **8 Charts per file:** Raw ECG, Filtered ECG, R-Peak overlay, RR Tachogram, **RR Histogram** *(NEW)*, Ectopic Correction, PSD, Poincaré, DFA.
+- **Multi-file comparison summary page** auto-appended to PDF when >1 file is loaded.
+
+### 📐 8. QR Code *(NEW — v2.1)*
+- Auto-generated QR code displayed on home page footer linking to GitHub repository.
+- Requires `qrcode[pil]` (graceful fallback to text link if not installed).
 
 ---
 
@@ -68,7 +84,6 @@ https://github.com/60140-Ikrama/ecg-hrv-suite/raw/master/Demo/Recording%20ECGHRV
    ```
 
 2. **Install dependencies:**
-   It is recommended to use a virtual environment.
    ```bash
    pip install -r requirements.txt
    ```
@@ -77,7 +92,7 @@ https://github.com/60140-Ikrama/ecg-hrv-suite/raw/master/Demo/Recording%20ECGHRV
    ```bash
    streamlit run app.py
    ```
-   The suite will automatically open in your browser at `http://localhost:8501`.
+   Opens automatically at `http://localhost:8501`.
 
 ---
 
@@ -85,45 +100,57 @@ https://github.com/60140-Ikrama/ecg-hrv-suite/raw/master/Demo/Recording%20ECGHRV
 
 ```text
 ecg-hrv-suite/
-├── app.py                             # Main landing page & pipeline entry point
-├── components/                        # UI/UX, Theme, and Sidebar settings
-│   ├── sidebar_settings.py            # Global interactive state controller
-│   └── theme.py                       # Clinical Sentinel CSS & Chart templates
-├── pages/                             # The 8 Core Dashboards
-│   ├── 01_Input_and_Acquisition.py
-│   ├── 02_Preprocessing.py
-│   ├── 03_R_Peak_Detection.py
-│   ├── 04_RR_Intervals_and_Ectopics.py
-│   ├── 05_HRV_Analysis_Time_Freq.py
-│   ├── 06_Non_Linear_HRV.py
-│   ├── 07_Multi_File_Comparison.py
-│   └── 08_Report_Generation.py
-├── utils/                             # Core Signal Processing Modules
-│   ├── data_loader.py                 # EDF, MAT, CSV, DAT parsers
-│   ├── signal_processing.py           # SQI, Notch, Bandpass, Wavelet
-│   ├── rpeak_detection.py             # Custom Pan-Tompkins & Multi-method
-│   └── hrv_analysis.py                # Entropy, DFA, Z-scores, PSD
-└── requirements.txt
+├── app.py                               # Main landing page (11-dashboard hub, QR code)
+├── components/
+│   ├── sidebar_settings.py              # Global interactive state controller
+│   └── theme.py                         # Clinical Sentinel CSS & chart templates
+├── pages/
+│   ├── 01_Input_and_Acquisition.py      # File upload & URL download
+│   ├── 02_Preprocessing.py              # Filtering, SQI scoring
+│   ├── 03_R_Peak_Detection.py           # Pan-Tompkins + multi-method comparison
+│   ├── 04_RR_Intervals_and_Ectopics.py  # RR tachogram, histogram, ectopic correction
+│   ├── 05_HRV_Analysis_Time_Freq.py     # Time & frequency domain HRV
+│   ├── 06_Non_Linear_HRV.py             # Poincaré, DFA, entropy
+│   ├── 07_Multi_File_Comparison.py      # Side-by-side multi-file analysis
+│   ├── 08_Report_Generation.py          # PDF + DOCX export with risk section
+│   └── 09_Heart_Disease_Detection.py    # ← NEW: Cardiovascular risk assessment
+├── utils/
+│   ├── data_loader.py                   # EDF, MAT, CSV, DAT parsers
+│   ├── signal_processing.py             # SQI, Notch, Bandpass, Wavelet
+│   ├── rpeak_detection.py               # Custom Pan-Tompkins & multi-method
+│   ├── hrv_analysis.py                  # Entropy, DFA, Z-scores, PSD
+│   ├── heart_disease_detection.py       # ← NEW: Rule-based + ML classifier
+│   └── qr_generator.py                  # ← NEW: QR code PNG generator
+├── Demo/                                # Demo videos
+├── Reports/                             # Generated report outputs
+├── requirements.txt
+└── LICENSE
 ```
 
 ---
 
 ## 🎓 Academic Alignment (OEL)
 
-- **CLO1 (Algorithm Implementation):** Satisfied via `utils/rpeak_detection.py` (Custom Pan-Tompkins built from scratch without high-level wrapper libraries).
-- **CLO2 (Signal Analysis):** Satisfied via `utils/hrv_analysis.py` (Multi-domain HRV mapping, Spectral Density, DFA).
-- **CLO3 (Interpretation & Reporting):** Satisfied via `pages/08_Report_Generation.py` and the automatic clinical context engine.
+| CLO | Implementation |
+|-----|----------------|
+| **CLO1** (Algorithm) | `utils/rpeak_detection.py` — Custom Pan-Tompkins from scratch |
+| **CLO2** (Analysis) | `utils/hrv_analysis.py` — Multi-domain HRV (time/freq/nonlinear) |
+| **CLO3** (Reporting) | `pages/08_Report_Generation.py` + `pages/09_Heart_Disease_Detection.py` — Clinical interpretation, automated risk scoring, PDF/DOCX export |
 
 ---
 
-## ⚖️ License & Terms of Use
+## ⚙️ Dependencies
 
-> **PROPRIETARY AND CONFIDENTIAL**
-> 
-> This repository and all accompanying code, documentation, and media are the proprietary property of **Muhammad Ikrama**.
-> 
-> **All rights reserved.** Modification, distribution, and use of this software are strictly prohibited without prior explicit written permission from the author. For academic inquiries or to request permission to use this codebase, please contact the author directly.
+```
+streamlit>=1.30  pandas  numpy  scipy  plotly
+neurokit2  PyWavelets  mne  reportlab  python-docx
+kaleido  scikit-learn  qrcode[pil]  Pillow
+```
 
 ---
 
-*Developed for the Biomedical Signal Processing Open-Ended Lab (OEL). Built with Streamlit, Plotly, SciPy, NumPy, and ReportLab.*
+## ⚖️ License
+
+MIT License — see `LICENSE` file.
+
+*Developed for the Biomedical Signal Processing Open-Ended Lab (OEL). Built with Streamlit, Plotly, SciPy, NumPy, ReportLab, and scikit-learn.*

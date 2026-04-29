@@ -13,6 +13,7 @@ from components.theme import (inject_stitch_theme, sentinel_header,
                                PLOTLY_LAYOUT, set_layout, save_all_figures)
 from components.sidebar_settings import render_sidebar_settings
 from utils.hrv_analysis import interpret_hrv, detrended_fluctuation_analysis
+from utils.heart_disease_detection import classify_cardiovascular_risk
 
 st.set_page_config(page_title="Report Generation · Clinical Sentinel",
                    page_icon="📑", layout="wide")
@@ -201,6 +202,24 @@ def _generate_report_charts(filename: str) -> dict:
             try: charts["dfa"] = fig.to_image(format="png", width=800, height=350, engine="kaleido")
             except: pass
 
+    # 8. RR Histogram
+    if clean_rr is not None and len(clean_rr) > 5:
+        fig = go.Figure()
+        fig.add_trace(go.Histogram(
+            x=clean_rr, nbinsx=40, name="RR Intervals",
+            marker_color=COLORS["primary_dim"],
+            marker_line=dict(color=COLORS["outline_variant"], width=0.5)))
+        mean_rr = float(np.mean(clean_rr))
+        std_rr  = float(np.std(clean_rr))
+        for offset, lbl in [(-std_rr, "-1σ"), (std_rr, "+1σ")]:
+            fig.add_vline(x=mean_rr + offset, line_dash="dot",
+                          line_color=COLORS["secondary_fixed"],
+                          annotation_text=lbl,
+                          annotation_font=dict(color=COLORS["secondary_fixed"], size=9))
+        set_layout(fig, "RR Interval Histogram", xaxis_title="RR Interval (ms)", yaxis_title="Count")
+        try: charts["rr_histogram"] = fig.to_image(format="png", width=800, height=320, engine="kaleido")
+        except: pass
+
     return charts
 
 def _safe(v):
@@ -342,13 +361,14 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
         # MANDATORY GRAPHS
         charts = _generate_report_charts(fname)
         chart_order = [
-            ("ecg_raw_filt", "Figure 1: ECG Signal (Raw vs Filtered)"),
-            ("rpeaks", "Figure 2: R-Peak Detection Overlay"),
-            ("rr_tachogram", "Figure 3: RR Tachogram (Interval Variation)"),
-            ("ectopic_corr", "Figure 4: Ectopic Beat Correction"),
-            ("psd", "Figure 5: Power Spectral Density (LF/HF Bands)"),
-            ("poincare", "Figure 6: Poincaré Plot (Non-linear Scatter)"),
-            ("dfa", "Figure 7: Detrended Fluctuation Analysis (DFA)")
+            ("ecg_raw_filt",  "Figure 1: ECG Signal (Raw vs Filtered)"),
+            ("rpeaks",        "Figure 2: R-Peak Detection Overlay"),
+            ("rr_tachogram",  "Figure 3: RR Tachogram (Interval Variation)"),
+            ("rr_histogram",  "Figure 4: RR Interval Histogram"),
+            ("ectopic_corr",  "Figure 5: Ectopic Beat Correction"),
+            ("psd",           "Figure 6: Power Spectral Density (LF/HF Bands)"),
+            ("poincare",      "Figure 7: Poincaré Plot (Non-linear Scatter)"),
+            ("dfa",           "Figure 8: Detrended Fluctuation Analysis (DFA)"),
         ]
         
         for ckey, clabel in chart_order:
@@ -364,7 +384,75 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
                 _os.remove(tpath)
                 story.append(Spacer(1, 0.4*cm))
         
+        # ── Heart Disease Risk Section ──────────────────────────────────────
+        story.append(Paragraph("<b>Heart Disease Risk Assessment</b>", body))
+        raw_rr_cache = {}
+        try:
+            import streamlit as _st
+            raw_rr_cache = _st.session_state.get("raw_rr_intervals", {})
+        except Exception:
+            pass
+        raw_rr_f = raw_rr_cache.get(fname)
+        pct_e = 0.0
+        if raw_rr_f is not None and len(raw_rr_f) > 0:
+            from utils.hrv_analysis import detect_ectopic_beats as _deb
+            _msk = _deb(raw_rr_f)
+            pct_e = float(np.sum(_msk)) / len(raw_rr_f) * 100
+        risk_res = classify_cardiovascular_risk(m, pct_ectopic=pct_e, use_ml=False)
+        risk_level = risk_res["risk_level"]
+        risk_score = risk_res["score"]
+        risk_conf  = risk_res["confidence"]
+        risk_color_map = {"Normal": rl_colors.HexColor("#4caf7d"),
+                          "Mild Risk": rl_colors.HexColor("#ffba38"),
+                          "High Risk": rl_colors.HexColor("#f44336")}
+        risk_para_style = ParagraphStyle(
+            "risk", fontName=FONT_NAME, fontSize=13, spaceAfter=6,
+            textColor=risk_color_map.get(risk_level, rl_colors.black), alignment=1)
+        story.append(Paragraph(f"Risk Level: {risk_level}", risk_para_style))
+        story.append(Paragraph(
+            f"Risk Score: {risk_score:.0f}/100  |  Confidence: {risk_conf:.0f}%", body))
+        story.append(Spacer(1, 0.3*cm))
+        flag_rows = [["Metric", "Value", "Status", "Clinical Note"]]
+        for metric, info in risk_res.get("flags", {}).items():
+            flag_rows.append([
+                metric, info.get("value", "N/A"),
+                info.get("status", "N/A").replace("_", " ").title(),
+                info.get("clinical_note", "")[:80],
+            ])
+        if len(flag_rows) > 1:
+            t_risk = Table(flag_rows, colWidths=[4*cm, 2.5*cm, 2.5*cm, 7*cm])
+            t_risk.setStyle(TableStyle([
+                ('GRID', (0,0), (-1,-1), 0.4, rl_colors.grey),
+                ('BACKGROUND', (0,0), (-1,0), rl_colors.HexColor("#d5e8f7")),
+                ('FONTSIZE', (0,0), (-1,-1), 7),
+            ]))
+            story.append(t_risk)
+        story.append(Spacer(1, 0.5*cm))
+
         story.append(PageBreak())
+
+    # ── Multi-file comparison summary ──────────────────────────────────────────
+    if len(metrics_dict) > 1:
+        story.append(Paragraph("Multi-File Comparison Summary", h2))
+        comp_keys = ["Mean HR (bpm)", "SDNN (ms)", "RMSSD (ms)",
+                     "pNN50 (%)", "LF/HF Ratio", "SD1 (ms)", "SD2 (ms)"]
+        comp_header = ["Metric"] + [f[:18] for f in metrics_dict]
+        comp_rows   = [comp_header]
+        for k in comp_keys:
+            row = [k]
+            for f, mv in metrics_dict.items():
+                v = mv.get(k)
+                row.append(_safe(v) if v is not None else "N/A")
+            comp_rows.append(row)
+        col_w = [4.5*cm] + [max(2*cm, 12*cm // len(metrics_dict))] * len(metrics_dict)
+        t_comp = Table(comp_rows, colWidths=col_w)
+        t_comp.setStyle(TableStyle([
+            ('GRID', (0,0), (-1,-1), 0.5, rl_colors.grey),
+            ('BACKGROUND', (0,0), (-1,0), rl_colors.HexColor("#d5e8f7")),
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+        ]))
+        story.append(t_comp)
+        story.append(Spacer(1, 0.6*cm))
 
     doc.build(story)
     return buf.getvalue()
@@ -491,24 +579,59 @@ def main():
             st.download_button("Download DOCX", data=st.session_state["docx_bytes"], file_name="HRV_Report.docx", use_container_width=True)
 
     st.markdown("---")
-    section_header("Clinical Interpretation Summary")
+    section_header("Clinical Interpretation & Risk Summary")
+
+    RISK_COLORS = {"Normal": "#4caf7d", "Mild Risk": "#ffba38", "High Risk": "#f44336"}
+    RISK_ICONS  = {"Normal": "✅", "Mild Risk": "⚠️", "High Risk": "🚨"}
+    raw_rr_cache = st.session_state.get("raw_rr_intervals", {})
+
     for fname, m in metrics_dict.items():
         interp  = interpret_hrv(m, m)
         sqi     = sqi_cache.get(fname, {})
         lf_hf   = m.get("LF/HF Ratio", float('nan'))
         sqi_lbl = sqi.get("quality_label", "—") if sqi else "—"
+
+        # Compute risk
+        raw_rr_f = raw_rr_cache.get(fname)
+        pct_e = 0.0
+        if raw_rr_f is not None and len(raw_rr_f) > 0:
+            from utils.hrv_analysis import detect_ectopic_beats as _deb
+            import numpy as _np
+            _msk = _deb(raw_rr_f)
+            pct_e = float(_np.sum(_msk)) / len(raw_rr_f) * 100
+        risk_res   = classify_cardiovascular_risk(m, pct_ectopic=pct_e, use_ml=True)
+        risk_level = risk_res["risk_level"]
+        risk_color = RISK_COLORS.get(risk_level, "#c3f400")
+        risk_icon  = RISK_ICONS.get(risk_level, "—")
+        risk_score = risk_res["score"]
+
+        lf_hf_str = f"{lf_hf:.2f}" if isinstance(lf_hf, float) and lf_hf == lf_hf else "N/A"
         st.markdown(f"""
-        <div style="background:#1a1c1f;border:1px solid #1e2023;border-left:4px solid #c3f400;border-radius:0.375rem;padding:1rem;margin-bottom:0.75rem;">
+        <div style="background:#1a1c1f;border:1px solid #1e2023;
+                    border-left:4px solid {risk_color};border-radius:0.375rem;
+                    padding:1rem;margin-bottom:0.75rem;">
           <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
             <span style="font-weight:800;color:#849396;">{fname}</span>
-            <span style="background:#c3f400;color:#000;font-size:0.6rem;padding:0.15rem 0.5rem;border-radius:0.2rem;">SQI: {sqi_lbl}</span>
+            <div style="display:flex;gap:0.4rem;align-items:center;">
+              <span style="background:{risk_color};color:#000;font-size:0.6rem;
+                           font-weight:700;padding:0.15rem 0.5rem;border-radius:0.2rem;">
+                {risk_icon} {risk_level} ({risk_score:.0f}/100)
+              </span>
+              <span style="background:#c3f400;color:#000;font-size:0.6rem;
+                           padding:0.15rem 0.5rem;border-radius:0.2rem;">SQI: {sqi_lbl}</span>
+            </div>
           </div>
           <div style="font-size:0.8rem;color:#bac9cc;">
             <strong>HRV Status:</strong> {interp.get('sdnn_class','—')}<br>
             <strong>Vagal Tone:</strong> {interp.get('autonomic','—')}<br>
-            <strong>Sympathovagal (LF/HF={lf_hf:.2f}):</strong> {interp.get('lf_hf_class','—')}
+            <strong>Sympathovagal (LF/HF={lf_hf_str}):</strong> {interp.get('lf_hf_class','—')}
           </div>
         </div>""", unsafe_allow_html=True)
+
+    # ── Heart disease section header ───────────────────────────────────────────
+    st.markdown("---")
+    section_header("Heart Disease Risk Assessment (All Files)")
+    st.info("For detailed per-metric breakdown and ML confidence scores, visit **Dashboard 09 · Heart Disease Detection**.")
 
 
 if __name__ == "__main__":

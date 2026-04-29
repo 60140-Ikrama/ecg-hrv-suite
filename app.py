@@ -60,6 +60,7 @@ def main():
         ("📊", "PSD",      ""),
         ("🔬", "Nonlinear","amber"),
         ("📁", "Compare",  ""),
+        ("🫀", "Risk",     "amber"),
         ("📑", "Report",   "green"),
     ]
     nodes = ""
@@ -91,7 +92,7 @@ def main():
          "Pan-Tompkins, NeuroKit, Hamilton &amp; Elgendi algorithms with overlay visualization.",
          "green","Detection"),
         ("04","⏱️","RR Interval Analysis",
-         "RR tachogram, time-series view, variability patterns and SQI scoring.",
+         "RR tachogram, histogram, time-series view, variability patterns and SQI scoring.",
          "cyan","Intervals"),
         ("05","⚠️","Ectopic Correction",
          "Multi-method ectopic detection with linear/spline interpolation. Before/after view.",
@@ -108,8 +109,11 @@ def main():
         ("09","📁","Multi-File Comparison",
          "Side-by-side HRV metrics, PSD overlay and statistical table across recordings.",
          "cyan","Compare"),
-        ("10","📑","Report Generation",
-         "Export professional PDF reports with full metrics, charts and clinical summary.",
+        ("10","🫀","Heart Disease Detection",
+         "Rule-based + ML cardiovascular risk: Normal / Mild / High Risk with clinical flags.",
+         "amber","Clinical"),
+        ("11","📑","Report Generation",
+         "Export professional PDF/DOCX with all charts, risk assessment &amp; clinical summary.",
          "green","Report"),
     ]
 
@@ -168,9 +172,9 @@ def main():
     n_files = len(st.session_state.get("ecg_files", {}))
     st.markdown(f"""
     <div class="stats-footer">
-      <div class="stats-item">Version <span class="val">v2.0.0</span></div>
+      <div class="stats-item">Version <span class="val">v2.1.0</span></div>
       <div class="stats-dot"></div>
-      <div class="stats-item">Dashboards <span class="val">10</span></div>
+      <div class="stats-item">Dashboards <span class="val">11</span></div>
       <div class="stats-dot"></div>
       <div class="stats-item">Files Loaded <span class="val">{n_files}</span></div>
       <div class="stats-dot"></div>
