@@ -163,8 +163,9 @@ def build_markdown_report(metrics_dict: dict, settings: dict,
 # ── Chart & Document Generators ───────────────────────────────────────────────
 
 def _generate_report_charts(filename: str) -> dict:
-    """Generates the 6 mandatory charts for the report."""
+    """Generates the 8 mandatory charts for the report with robust error handling."""
     charts = {}
+    errors = []
     sfreq = st.session_state.get("sfreq", 250.0)
     
     # Ensure trapezoid is available
@@ -174,6 +175,19 @@ def _generate_report_charts(filename: str) -> dict:
     except ImportError:
         _trapz = np.trapz
     
+    def _export_fig(fig, key, width=800, height=350):
+        try:
+            # Try kaleido first (best for static PDFs)
+            img = fig.to_image(format="png", width=width, height=height, engine="kaleido")
+            charts[key] = img
+        except Exception as e:
+            try:
+                # Fallback: let plotly decide engine
+                img = fig.to_image(format="png", width=width, height=height)
+                charts[key] = img
+            except Exception as e2:
+                errors.append(f"Chart '{key}' failed: {str(e2)}")
+
     # 1. ECG Signal (Raw vs Filtered)
     raw_sig = st.session_state.get("raw_signals", {}).get(filename)
     filt_sig = st.session_state.get("cleaned_signals", {}).get(filename)
@@ -182,12 +196,12 @@ def _generate_report_charts(filename: str) -> dict:
         t = np.arange(max_idx) / sfreq
         fig = go.Figure()
         if raw_sig is not None:
-            # Normalize raw for comparison if needed, or just plot
-            fig.add_trace(go.Scatter(x=t, y=raw_sig[:max_idx], name="Raw", line=dict(color="rgba(255,255,255,0.3)", width=1)))
-        fig.add_trace(go.Scatter(x=t, y=filt_sig[:max_idx], name="Filtered", line=dict(color=COLORS["primary"])))
+            fig.add_trace(go.Scatter(x=t, y=raw_sig[:max_idx], name="Raw", 
+                                     line=dict(color="rgba(132,147,150,0.4)", width=1)))
+        fig.add_trace(go.Scatter(x=t, y=filt_sig[:max_idx], name="Filtered", 
+                                 line=dict(color="#00daf3", width=1.5)))
         set_layout(fig, "ECG Signal (Raw vs Filtered)")
-        try: charts["ecg_raw_filt"] = fig.to_image(format="png", width=800, height=350, engine="kaleido")
-        except: pass
+        _export_fig(fig, "ecg_raw_filt")
         
     # 2. R-Peak Detection Overlay
     rpeaks = st.session_state.get("rpeaks", {}).get(filename)
@@ -195,52 +209,49 @@ def _generate_report_charts(filename: str) -> dict:
         max_idx = min(len(filt_sig), int(10 * sfreq))
         t = np.arange(max_idx) / sfreq
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=t, y=filt_sig[:max_idx], name="ECG", line=dict(color=COLORS["primary"], width=1)))
+        fig.add_trace(go.Scatter(x=t, y=filt_sig[:max_idx], name="ECG", 
+                                 line=dict(color="#00daf3", width=1)))
         rp_in = rpeaks[rpeaks < max_idx]
         fig.add_trace(go.Scatter(x=rp_in / sfreq, y=filt_sig[rp_in], mode="markers", 
-                                 name="R-Peaks", marker=dict(color=COLORS["error"], size=10, symbol="triangle-up")))
+                                 name="R-Peaks", marker=dict(color="#ff4b4b", size=10, symbol="triangle-up")))
         set_layout(fig, "R-Peak Detection Overlay")
-        try: charts["rpeaks"] = fig.to_image(format="png", width=800, height=350, engine="kaleido")
-        except: pass
+        _export_fig(fig, "rpeaks")
 
     # 3. RR Tachogram
     clean_rr = st.session_state.get("clean_rr_intervals", {}).get(filename)
     if clean_rr is not None:
         fig = go.Figure()
-        fig.add_trace(go.Scatter(y=clean_rr, mode='lines+markers', line=dict(color=COLORS["primary_dim"]), name="RR"))
+        fig.add_trace(go.Scatter(y=clean_rr, mode='lines+markers', 
+                                 line=dict(color="#00daf3"), name="RR"))
         set_layout(fig, "RR Tachogram", xaxis_title="Beat Index", yaxis_title="RR Interval (ms)")
-        try: charts["rr_tachogram"] = fig.to_image(format="png", width=800, height=350, engine="kaleido")
-        except: pass
+        _export_fig(fig, "rr_tachogram")
 
     # 4. Ectopic Correction (Raw vs Clean RR)
     raw_rr = st.session_state.get("raw_rr_intervals", {}).get(filename)
     if raw_rr is not None and clean_rr is not None:
         fig = go.Figure()
-        fig.add_trace(go.Scatter(y=raw_rr, name="Raw RR", line=dict(color="rgba(255,180,171,0.4)", width=1)))
-        fig.add_trace(go.Scatter(y=clean_rr, name="Clean RR", line=dict(color=COLORS["secondary_fixed"])))
+        fig.add_trace(go.Scatter(y=raw_rr, name="Raw RR", line=dict(color="rgba(255,75,75,0.3)", width=1)))
+        fig.add_trace(go.Scatter(y=clean_rr, name="Clean RR", line=dict(color="#c3f400")))
         set_layout(fig, "Ectopic Correction (Raw vs Clean RR)", xaxis_title="Beat Index", yaxis_title="RR (ms)")
-        try: charts["ectopic_corr"] = fig.to_image(format="png", width=800, height=350, engine="kaleido")
-        except: pass
+        _export_fig(fig, "ectopic_corr")
 
     # 5. PSD (Frequency Domain)
     psd_raw = st.session_state.get("psd_data", {}).get(filename)
     if psd_raw is not None:
         freqs_p, psd_p = psd_raw
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=freqs_p, y=psd_p, fill="tozeroy", line=dict(color=COLORS["secondary_fixed"])))
+        fig.add_trace(go.Scatter(x=freqs_p, y=psd_p, fill="tozeroy", line=dict(color="#00daf3")))
         set_layout(fig, "Power Spectral Density (LF/HF)", xaxis_title="Frequency (Hz)", yaxis_title="Power (ms²/Hz)")
-        try: charts["psd"] = fig.to_image(format="png", width=800, height=350, engine="kaleido")
-        except: pass
+        _export_fig(fig, "psd")
 
     # 6. Poincare Plot
     if clean_rr is not None and len(clean_rr) > 2:
         rn, rn1 = clean_rr[:-1], clean_rr[1:]
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=rn, y=rn1, mode="markers", marker=dict(color=COLORS["primary_dim"], size=4, opacity=0.5)))
+        fig.add_trace(go.Scatter(x=rn, y=rn1, mode="markers", 
+                                 marker=dict(color="#00daf3", size=4, opacity=0.5)))
         set_layout(fig, "Poincaré Plot (Non-linear)", xaxis_title="RR(n) ms", yaxis_title="RR(n+1) ms")
-        fig.update_layout(width=500, height=500)
-        try: charts["poincare"] = fig.to_image(format="png", width=500, height=500, engine="kaleido")
-        except: pass
+        _export_fig(fig, "poincare", width=500, height=500)
 
     # 7. DFA Plot
     if clean_rr is not None and len(clean_rr) > 32:
@@ -248,41 +259,33 @@ def _generate_report_charts(filename: str) -> dict:
         scales, fluct = dfa_res.get("scales", []), dfa_res.get("fluct", [])
         if len(scales) > 3:
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=np.log10(scales), y=np.log10(fluct), mode='markers+lines', marker=dict(color=COLORS["primary_dim"])))
-            
-            # Add short-term alpha1 line
+            fig.add_trace(go.Scatter(x=np.log10(scales), y=np.log10(fluct), 
+                                     mode='markers+lines', marker=dict(color="#00daf3")))
             a1 = dfa_res.get("alpha1")
             if a1 and np.isfinite(a1):
                 mask = (scales >= 4) & (scales <= 16)
                 if np.sum(mask) >= 2:
-                    lx = np.log10(scales[mask])
-                    ly = np.log10(fluct[mask])
+                    lx, ly = np.log10(scales[mask]), np.log10(fluct[mask])
                     c = np.polyfit(lx, ly, 1)
                     x_line = np.array([lx.min(), lx.max()])
-                    fig.add_trace(go.Scatter(x=x_line, y=np.polyval(c, x_line), mode='lines', name=f"α1={a1:.2f}", line=dict(color=COLORS["secondary_fixed"], dash='dash')))
-            
+                    fig.add_trace(go.Scatter(x=x_line, y=np.polyval(c, x_line), mode='lines', 
+                                             name=f"α1={a1:.2f}", line=dict(color="#c3f400", dash='dash')))
             set_layout(fig, "Detrended Fluctuation Analysis (DFA)", xaxis_title="log10(Scale n)", yaxis_title="log10(F(n))")
-            try: charts["dfa"] = fig.to_image(format="png", width=800, height=350, engine="kaleido")
-            except: pass
+            _export_fig(fig, "dfa")
 
     # 8. RR Histogram
     if clean_rr is not None and len(clean_rr) > 5:
         fig = go.Figure()
-        fig.add_trace(go.Histogram(
-            x=clean_rr, nbinsx=40, name="RR Intervals",
-            marker_color=COLORS["primary_dim"],
-            marker_line=dict(color=COLORS["outline_variant"], width=0.5)))
+        fig.add_trace(go.Histogram(x=clean_rr, nbinsx=40, marker_color="#00daf3"))
         mean_rr = float(np.mean(clean_rr))
         std_rr  = float(np.std(clean_rr))
         for offset, lbl in [(-std_rr, "-1σ"), (std_rr, "+1σ")]:
-            fig.add_vline(x=mean_rr + offset, line_dash="dot",
-                          line_color=COLORS["secondary_fixed"],
-                          annotation_text=lbl,
-                          annotation_font=dict(color=COLORS["secondary_fixed"], size=9))
+            fig.add_vline(x=mean_rr + offset, line_dash="dot", line_color="#c3f400")
         set_layout(fig, "RR Interval Histogram", xaxis_title="RR Interval (ms)", yaxis_title="Count")
-        try: charts["rr_histogram"] = fig.to_image(format="png", width=800, height=320, engine="kaleido")
-        except: pass
+        _export_fig(fig, "rr_histogram", height=320)
 
+    if errors:
+        st.session_state["report_errors"] = errors
     return charts
 
 def _safe(v):
@@ -628,7 +631,11 @@ def main():
     with col_pdf:
         if st.button("Generate PDF Report", use_container_width=True):
             with st.spinner("Building PDF..."):
+                st.session_state["report_errors"] = []
                 st.session_state["pdf_bytes"] = build_pdf_report(metrics_dict, settings, sqi_cache)
+                if st.session_state.get("report_errors"):
+                    for err in st.session_state["report_errors"]:
+                        st.warning(f"⚠️ {err}")
                 
         if "pdf_bytes" in st.session_state:
             st.download_button("Download PDF", data=st.session_state["pdf_bytes"], file_name="HRV_Report.pdf", mime="application/pdf", use_container_width=True)
@@ -636,7 +643,11 @@ def main():
     with col_docx:
         if st.button("Generate DOCX Report", use_container_width=True):
             with st.spinner("Building Word Doc..."):
+                st.session_state["report_errors"] = []
                 st.session_state["docx_bytes"] = build_docx_report(metrics_dict, settings, sqi_cache)
+                if st.session_state.get("report_errors"):
+                    for err in st.session_state["report_errors"]:
+                        st.warning(f"⚠️ {err}")
                 
         if "docx_bytes" in st.session_state:
             st.download_button("Download DOCX", data=st.session_state["docx_bytes"], file_name="HRV_Report.docx", use_container_width=True)
