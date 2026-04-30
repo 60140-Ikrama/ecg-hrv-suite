@@ -38,13 +38,13 @@ def main():
       </div>
       <div class="hero-subtitle">
         Research-grade ECG acquisition, preprocessing, R-peak detection,
-        ectopic correction and full HRV analysis across time, frequency and non-linear domains.
+        ectopic correction and full HRV analysis. Now featuring <b>Signal Quality-Aware Adaptive Analysis (SQI)</b>.
       </div>
       <div class="hero-pills">
         <div class="hero-pill"><span class="dot cyan"></span> Live Processing</div>
-        <div class="hero-pill"><span class="dot"></span> 10 Dashboards</div>
+        <div class="hero-pill"><span class="dot green"></span> Adaptive SQI</div>
         <div class="hero-pill"><span class="dot amber"></span> 6 Algorithms</div>
-        <div class="hero-pill"><span class="dot" style="background:#ffba38;animation-delay:.9s"></span> PDF Reports</div>
+        <div class="hero-pill"><span class="dot" style="background:#ffba38;animation-delay:.9s"></span> Confidence-Aware</div>
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -52,7 +52,7 @@ def main():
     # ── Pipeline Timeline ─────────────────────────────────────────────────────
     steps = [
         ("📡", "Acquire",   "active"),
-        ("🧹", "Filter",    ""),
+        ("🧹", "Adaptive",  "green"),
         ("❤️", "R-Peaks",  "green"),
         ("⏱️", "RR",       ""),
         ("⚠️", "Ectopic",  "amber"),
@@ -85,8 +85,8 @@ def main():
         ("01","📡","Signal Acquisition",
          "Upload ECG files (.csv, .mat, .dat, .edf, .txt). Batch support &amp; URL download.",
          "cyan","Input"),
-        ("02","🧹","Preprocessing",
-         "Bandpass filter, baseline wander removal, wavelet &amp; notch denoising pipeline.",
+        ("02","🧹","Adaptive Preprocessing",
+         "SQI-aware filtering: Selects denoising strategy based on signal quality index.",
          "cyan","Filter"),
         ("03","❤️","R-Peak Detection",
          "Pan-Tompkins, NeuroKit, Hamilton &amp; Elgendi algorithms with overlay visualization.",
@@ -98,10 +98,10 @@ def main():
          "Multi-method ectopic detection with linear/spline interpolation. Before/after view.",
          "amber","Critical"),
         ("06","📈","Time-Domain HRV",
-         "SDNN, RMSSD, NN50, pNN50, Mean RR — clinical KPI cards with reference ranges.",
+         "SDNN, RMSSD, pNN50 — with confidence scores derived from signal quality.",
          "green","HRV"),
         ("07","📊","Frequency-Domain HRV",
-         "Welch PSD with LF/HF band highlights, sympathovagal interpretation &amp; trend.",
+         "Welch PSD with LF/HF band highlights and sympathovagal interpretation.",
          "green","Spectral"),
         ("08","🔬","Non-Linear HRV",
          "Poincaré plot with SD1/SD2 ellipse, Sample Entropy, ApEn and DFA scaling.",
@@ -110,10 +110,10 @@ def main():
          "Side-by-side HRV metrics, PSD overlay and statistical table across recordings.",
          "cyan","Compare"),
         ("10","🫀","Heart Disease Detection",
-         "Rule-based + ML cardiovascular risk: Normal / Mild / High Risk with clinical flags.",
+         "Rule-based + ML risk assessment with confidence scores and clinical notes.",
          "amber","Clinical"),
         ("11","📑","Report Generation",
-         "Export professional PDF/DOCX with all charts, risk assessment &amp; clinical summary.",
+         "Export PDF/DOCX/LaTeX with all charts, risk assessment &amp; confidence analytics.",
          "green","Report"),
     ]
 
@@ -147,21 +147,19 @@ def main():
         </div>
         <div class="qs-step">
           <div class="qs-num">2</div>
-          <div class="qs-text">Adjust filter parameters and algorithm settings from the
-            <strong style="color:#c3f5ff;">sidebar</strong> — changes propagate to all dashboards instantly.
+          <div class="qs-text">Review signal quality in 
+            <strong style="color:#c3f5ff;">🧹 Adaptive Preprocessing</strong>. The system will auto-select the best filter.
           </div>
         </div>
         <div class="qs-step">
           <div class="qs-num">3</div>
-          <div class="qs-text">Follow the pipeline dashboards in order — each page builds
-            on the previous step's processed output.
+          <div class="qs-text">Analyze HRV and Risk metrics — check the <b>Confidence Badge</b> on each card.
           </div>
         </div>
         <div class="qs-step">
           <div class="qs-num">4</div>
           <div class="qs-text">Finish with
-            <strong style="color:#c3f400;">&#x1F4C1; Multi-File Comparison</strong> and
-            <strong style="color:#ffba38;">&#x1F4C4; Report Generation</strong> for academic output.
+            <strong style="color:#ffba38;">&#x1F4C4; Report Generation</strong> to export PDF, Word, or <b>LaTeX</b>.
           </div>
         </div>
       </div>
@@ -172,7 +170,7 @@ def main():
     n_files = len(st.session_state.get("ecg_files", {}))
     st.markdown(f"""
     <div class="stats-footer">
-      <div class="stats-item">Version <span class="val">v2.1.0</span></div>
+      <div class="stats-item">Version <span class="val">v2.2.0</span></div>
       <div class="stats-dot"></div>
       <div class="stats-item">Dashboards <span class="val">11</span></div>
       <div class="stats-dot"></div>

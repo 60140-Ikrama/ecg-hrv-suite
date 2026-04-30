@@ -43,32 +43,44 @@ def main():
     rem_bl = st.session_state.get("remove_baseline", True)
     noise  = st.session_state.get("noise_method",    "None")
 
-    # ── Step-by-step pipeline ────────────────────────────────────────────────
+    # ── Adaptive Pipeline Logic (SQI-Aware) ──────────────────────────────────
+    # 1. First, compute SQI on the raw signal to determine adaptive strategy
+    sqi_raw = compute_sqi(raw, sfreq)
+    
+    # 2. Apply adaptive preprocessing
+    clean, strategy = adaptive_preprocess_ecg(raw, sfreq, sqi_raw, lowcut=lowcut, 
+                                             highcut=highcut, filter_order=order)
+    
+    # Store results
+    if "cleaned_signals" not in st.session_state:
+        st.session_state["cleaned_signals"] = {}
+    st.session_state["cleaned_signals"][active] = clean
+    
+    if "sqi_cache" not in st.session_state:
+        st.session_state["sqi_cache"] = {}
+    st.session_state["sqi_cache"][active] = compute_sqi(clean, sfreq)
+
+    # ── Step-by-step pipeline (for visualization) ────────────────────────────
+    # Note: visualization steps are kept for the subplot section below
     steps  = {"Raw": raw.copy().astype(float)}
     if rem_bl:
         steps["Baseline Removed"] = remove_baseline_wander(steps["Raw"], sfreq)
     prev = list(steps.values())[-1]
     steps["Bandpass Filtered"] = apply_bandpass_filter(prev, sfreq, lowcut, highcut, order=order)
     prev = steps["Bandpass Filtered"]
-    if noise == "Wavelet":
-        steps["Wavelet Denoised"] = apply_wavelet_denoise(prev)
-    elif noise == "Powerline 50Hz":
-        steps["Notch 50 Hz"] = apply_notch_filter(prev, sfreq, 50.0)
-    elif noise == "Powerline 60Hz":
-        steps["Notch 60 Hz"] = apply_notch_filter(prev, sfreq, 60.0)
-    elif noise == "Adaptive":
-        steps["Adaptive Smoothed"] = apply_adaptive_filter(prev, sfreq)
-
-    clean = list(steps.values())[-1]
-
-    # Store in session state
-    if "cleaned_signals" not in st.session_state:
-        st.session_state["cleaned_signals"] = {}
-    st.session_state["cleaned_signals"][active] = clean
+    
+    # Show adaptive strategy in the step list
+    steps[f"Adaptive: {strategy}"] = clean
 
     # ── Settings chips ───────────────────────────────────────────────────────
     st.markdown(f"""
     <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+      <div class="glass-panel" style="padding:0.5rem 1rem;display:inline-block;border-left:3px solid #00daf3;">
+        <span style="font-size:0.6rem;color:#849396;font-family:'Inter';
+                     text-transform:uppercase;letter-spacing:0.1em;">SQI Strategy</span><br>
+        <span style="font-family:'Manrope';font-weight:700;color:#00daf3;">
+          {strategy}</span>
+      </div>
       <div class="glass-panel" style="padding:0.5rem 1rem;display:inline-block;">
         <span style="font-size:0.6rem;color:#849396;font-family:'Inter';
                      text-transform:uppercase;letter-spacing:0.1em;">Bandpass</span><br>
@@ -77,20 +89,10 @@ def main():
       </div>
       <div class="glass-panel" style="padding:0.5rem 1rem;display:inline-block;">
         <span style="font-size:0.6rem;color:#849396;font-family:'Inter';
-                     text-transform:uppercase;letter-spacing:0.1em;">Baseline</span><br>
+                     text-transform:uppercase;letter-spacing:0.1em;">Quality Label</span><br>
         <span style="font-family:'Manrope';font-weight:700;
-                     color:{'#c3f400' if rem_bl else '#849396'};">
-          {'ON' if rem_bl else 'OFF'}</span>
-      </div>
-      <div class="glass-panel" style="padding:0.5rem 1rem;display:inline-block;">
-        <span style="font-size:0.6rem;color:#849396;font-family:'Inter';
-                     text-transform:uppercase;letter-spacing:0.1em;">Extra Filter</span><br>
-        <span style="font-family:'Manrope';font-weight:700;color:#c3f5ff;">{noise}</span>
-      </div>
-      <div class="glass-panel" style="padding:0.5rem 1rem;display:inline-block;">
-        <span style="font-size:0.6rem;color:#849396;font-family:'Inter';
-                     text-transform:uppercase;letter-spacing:0.1em;">Pipeline Steps</span><br>
-        <span style="font-family:'Manrope';font-weight:700;color:#ffba38;">{len(steps)}</span>
+                     color:{'#c3f400' if sqi_raw['quality_label'] in ['Excellent','Good'] else '#ffba38'};">
+          {sqi_raw['quality_label']} ({sqi_raw['overall_sqi']}%)</span>
       </div>
     </div>
     """, unsafe_allow_html=True)

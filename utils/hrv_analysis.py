@@ -87,11 +87,17 @@ def detect_anomalies(rr_ms: np.ndarray, z_threshold: float = 3.0) -> dict:
 
 # ── TIME-DOMAIN HRV ───────────────────────────────────────────────────────────
 
-def get_time_domain_hrv(rr_ms: np.ndarray) -> dict:
-    """Standard time-domain HRV metrics."""
+def get_time_domain_hrv(rr_ms: np.ndarray, confidence_multiplier: float = 1.0) -> dict:
+    """Standard time-domain HRV metrics with confidence score."""
     if len(rr_ms) < 3:
         return {}
     diff = np.diff(rr_ms)
+    
+    # Base confidence from SQI and sample size
+    base_conf = confidence_multiplier * 100
+    sample_penalty = np.clip((1.0 - (100.0 / max(len(rr_ms), 100))) * 10, -20, 0)
+    final_conf = round(np.clip(base_conf + sample_penalty, 10, 99), 1)
+
     return {
         "Mean RR (ms)":   round(float(np.mean(rr_ms)), 2),
         "SDNN (ms)":      round(float(np.std(rr_ms, ddof=1)), 2),
@@ -101,6 +107,7 @@ def get_time_domain_hrv(rr_ms: np.ndarray) -> dict:
         "Mean HR (bpm)":  round(60000.0 / float(np.mean(rr_ms)), 1),
         "SDSD (ms)":      round(float(np.std(diff, ddof=1)), 2),
         "CV (%)":         round(float(np.std(rr_ms, ddof=1) / np.mean(rr_ms) * 100), 2),
+        "Confidence (%)": final_conf,
     }
 
 
@@ -112,11 +119,10 @@ def get_freq_domain_hrv(rr_ms: np.ndarray,
                         hf_band:  tuple = (0.15,  0.40),
                         fs_resample: float = 4.0,
                         nperseg: int = 256,
-                        noverlap: int = None):
+                        noverlap: int = None,
+                        confidence_multiplier: float = 1.0):
     """
-    Welch PSD with configurable segmenting.
-
-    Returns (metrics_dict, freqs, psd)  — or (None, None, None) on failure.
+    Welch PSD with confidence scoring.
     """
     if len(rr_ms) < 10:
         return None, None, None
@@ -153,6 +159,10 @@ def get_freq_domain_hrv(rr_ms: np.ndarray,
     lf    = _bp(*lf_band)
     hf    = _bp(*hf_band)
     total = vlf + lf + hf
+    
+    # Frequency domain is more sensitive to noise
+    base_conf = (confidence_multiplier ** 1.2) * 100
+    final_conf = round(np.clip(base_conf, 5, 98), 1)
 
     metrics = {
         "VLF Power (ms²)": round(vlf, 2),
@@ -162,24 +172,30 @@ def get_freq_domain_hrv(rr_ms: np.ndarray,
         "Total Power (ms²)": round(total, 2),
         "LF norm (%)":     round(lf / (lf + hf) * 100, 1) if (lf + hf) > 0 else 0.0,
         "HF norm (%)":     round(hf / (lf + hf) * 100, 1) if (lf + hf) > 0 else 0.0,
+        "Confidence (%)":  final_conf,
     }
     return metrics, freqs, psd
 
 
 # ── NON-LINEAR HRV ────────────────────────────────────────────────────────────
 
-def get_nonlinear_hrv(rr_ms: np.ndarray) -> dict:
-    """Poincaré SD1, SD2, ellipse area, and SD1/SD2 ratio."""
+def get_nonlinear_hrv(rr_ms: np.ndarray, confidence_multiplier: float = 1.0) -> dict:
+    """Poincaré metrics with confidence score."""
     if len(rr_ms) < 2:
         return {}
     d = np.diff(rr_ms)
     sd1 = float(np.std(d / np.sqrt(2), ddof=1))
     sd2 = float(np.std((rr_ms[:-1] + rr_ms[1:]) / np.sqrt(2), ddof=1))
+    
+    base_conf = confidence_multiplier * 100
+    final_conf = round(np.clip(base_conf, 10, 99), 1)
+
     return {
         "SD1 (ms)":           round(sd1, 2),
         "SD2 (ms)":           round(sd2, 2),
         "SD1/SD2":            round(sd1 / sd2, 3) if sd2 > 0 else float('nan'),
         "Ellipse Area (ms²)": round(math.pi * sd1 * sd2, 2),
+        "Confidence (%)":     final_conf,
     }
 
 
@@ -330,23 +346,30 @@ def analyze_hrv_trend(rr_ms: np.ndarray,
 # ── CLINICAL INTERPRETATION ───────────────────────────────────────────────────
 
 def interpret_hrv(time_metrics: dict, freq_metrics: dict) -> dict:
-    """Generate clinical interpretation strings."""
+    """Generate clinical interpretation strings with confidence caveats."""
     interp = {}
     sdnn  = time_metrics.get("SDNN (ms)",  0) or 0
     rmssd = time_metrics.get("RMSSD (ms)", 0) or 0
     lf_hf = (freq_metrics or {}).get("LF/HF Ratio", float('nan'))
+    conf  = time_metrics.get("Confidence (%)", 100)
+
+    conf_caveat = ""
+    if conf < 60:
+        conf_caveat = f" (Note: Interpretation has low confidence of {conf}% due to signal noise)."
+    elif conf < 80:
+        conf_caveat = f" (Moderate confidence: {conf}%)."
 
     if sdnn > 100:
-        interp["sdnn_class"] = "Excellent cardiac autonomic function (SDNN > 100 ms)."
+        interp["sdnn_class"] = f"Excellent cardiac autonomic function (SDNN > 100 ms){conf_caveat}."
     elif sdnn > 50:
-        interp["sdnn_class"] = "Normal cardiac autonomic function (50–100 ms)."
+        interp["sdnn_class"] = f"Normal cardiac autonomic function (50–100 ms){conf_caveat}."
     else:
-        interp["sdnn_class"] = "Reduced HRV — potential autonomic dysfunction (SDNN < 50 ms)."
+        interp["sdnn_class"] = f"Reduced HRV — potential autonomic dysfunction (SDNN < 50 ms){conf_caveat}."
 
     if math.isnan(lf_hf):
         interp["lf_hf_class"] = "Frequency-domain data unavailable."
     elif lf_hf > 2.0:
-        interp["lf_hf_class"] = (f"LF/HF = {lf_hf:.2f} → Sympathetic dominance. "
+        interp["lf_hf_class"] = (f"LF/HF = {lf_hf:.2f} → Sympathetic dominance{conf_caveat}. "
                                   "Indicates stress, exercise, or upright posture.")
     elif lf_hf < 1.0:
         interp["lf_hf_class"] = (f"LF/HF = {lf_hf:.2f} → Parasympathetic dominance. "

@@ -28,8 +28,13 @@ def main():
         st.warning("⚠️  Process RR intervals in **⏱️ RR & Ectopics** first.")
         return
 
+    # Get confidence multiplier from SQI
+    sqi_cache = st.session_state.get("sqi_cache", {}).get(active, {})
+    conf_mult = sqi_cache.get("confidence_multiplier", 1.0)
+    conf_score = round(conf_mult * 100, 1)
+
     clean_rr = st.session_state["clean_rr_intervals"][active]
-    nl_m     = get_nonlinear_hrv(clean_rr)
+    nl_m     = get_nonlinear_hrv(clean_rr, confidence_multiplier=conf_mult)
 
     if "metrics" not in st.session_state:
         st.session_state["metrics"] = {}
@@ -68,7 +73,15 @@ def main():
         a1_str, a2_str = "Off", "Off"
 
     # ── KPI row ───────────────────────────────────────────────────────────────
+    conf_color = "#c3f400" if conf_score >= 80 else "#ffba38" if conf_score >= 50 else "#ff4b4b"
+
     st.markdown(f"""
+    <div style="display:flex;justify-content:flex-end;margin-bottom:0.5rem;">
+      <div style="background:{conf_color}22;border:1px solid {conf_color};color:{conf_color};
+                  padding:0.2rem 0.6rem;border-radius:1rem;font-size:0.7rem;font-weight:700;">
+        🛡️ Analysis Confidence: {conf_score}%
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
       {kpi_card("SD1",           f"{sd1:.1f}",   "ms",  accent="primary")}
       {kpi_card("SD2",           f"{sd2:.1f}",   "ms",  accent="green")}

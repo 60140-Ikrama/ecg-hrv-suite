@@ -21,6 +21,62 @@ st.set_page_config(page_title="Report Generation · Clinical Sentinel",
 
 # ── report builder ────────────────────────────────────────────────────────────
 
+def build_latex_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> str:
+    """Generates a professional LaTeX source for the analysis report."""
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    latex = [
+        "\\documentclass[a4paper,10pt]{article}",
+        "\\usepackage[utf8]{inputenc}",
+        "\\usepackage[margin=1in]{geometry}",
+        "\\usepackage{booktabs}",
+        "\\usepackage{graphicx}",
+        "\\usepackage{color}",
+        "\\usepackage{hyperref}",
+        "",
+        "\\title{Clinical Sentinel: ECG \\& HRV Analysis Report}",
+        "\\author{Automated Research Suite v2.2.0}",
+        f"\\date{{{ts}}}",
+        "",
+        "\\begin{document}",
+        "\\maketitle",
+        "",
+        "\\section{Methodology}",
+        "This report presents an automated cardiovascular assessment based on Signal Quality-Aware Adaptive Analysis.",
+        "\\begin{itemize}",
+        f"  \\item \\textbf{{Sampling Rate:}} {settings.get('sfreq', 250):.0f} Hz",
+        f"  \\item \\textbf{{Filter Range:}} {settings.get('lowcut', 0.5):.2f} -- {settings.get('highcut', 40):.0f} Hz",
+        f"  \\item \\textbf{{R-Peak Algorithm:}} {settings.get('rpeak_method', 'NeuroKit')}",
+        "\\end{itemize}",
+        ""
+    ]
+
+    for fname, m in metrics_dict.items():
+        fname_esc = fname.replace("_", "\\_")
+        sqi = sqi_cache.get(fname, {})
+        conf = m.get("Confidence (%)", "N/A")
+        
+        latex += [
+            f"\\section{{Analysis for File: {fname_esc}}}",
+            f"\\textbf{{Signal Quality Index (SQI):}} {sqi.get('overall_sqi', 'N/A')}\\% ({sqi.get('quality_label', 'N/A')})\\\\",
+            f"\\textbf{{Analysis Confidence:}} {conf}\\%\\\\",
+            "",
+            "\\subsection{Time-Domain Metrics}",
+            "\\begin{tabular}{ll}",
+            "\\toprule",
+            "Metric & Value \\\\",
+            "\\midrule",
+            f"Mean RR & {m.get('Mean RR (ms)', 'N/A')} ms \\\\",
+            f"SDNN & {m.get('SDNN (ms)', 'N/A')} ms \\\\",
+            f"RMSSD & {m.get('RMSSD (ms)', 'N/A')} ms \\\\",
+            f"Mean HR & {m.get('Mean HR (bpm)', 'N/A')} bpm \\\\",
+            "\\bottomrule",
+            "\\end{tabular}",
+            ""
+        ]
+
+    latex += ["\\end{document}"]
+    return "\n".join(latex)
+
 def build_markdown_report(metrics_dict: dict, settings: dict,
                            sqi_cache: dict) -> str:
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -28,7 +84,7 @@ def build_markdown_report(metrics_dict: dict, settings: dict,
     lines += [
         "# Clinical Sentinel — ECG & HRV Analysis Report",
         f"\n**Generated:** {ts}  |  "
-        f"**Version:** Research-Grade Suite v2.0\n",
+        f"**Version:** Research-Grade Suite v2.2.0 (SQI-Aware)\n",
         "---\n",
     ]
 
@@ -110,6 +166,13 @@ def _generate_report_charts(filename: str) -> dict:
     """Generates the 6 mandatory charts for the report."""
     charts = {}
     sfreq = st.session_state.get("sfreq", 250.0)
+    
+    # Ensure trapezoid is available
+    import numpy as np
+    try:
+        from numpy import trapezoid as _trapz
+    except ImportError:
+        _trapz = np.trapz
     
     # 1. ECG Signal (Raw vs Filtered)
     raw_sig = st.session_state.get("raw_signals", {}).get(filename)
@@ -277,14 +340,14 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
         # Section: Global Summary
         story.append(Paragraph("<b>Global Analysis Summary</b>", body))
         summary_data = [
-            ["Metric", "Value", "Clinical Significance"],
+            ["Metric", "Value", "Confidence / Details"],
             ["Mean HR", f"{m.get('Mean HR (bpm)', 'N/A')}", "Average Heart Rate"],
-            ["SDNN", _safe(m.get('SDNN (ms)')), "Overall Autonomic Regulation"],
-            ["RMSSD", _safe(m.get('RMSSD (ms)')), "Parasympathetic Activity (Vagal Tone)"],
-            ["LF/HF Ratio", _safe(m.get('LF/HF Ratio')), "Sympathovagal Balance"],
-            ["Signal Quality", sqi.get('quality_label', 'N/A'), f"SQI: {sqi.get('overall_sqi','N/A')}"]
+            ["SDNN", _safe(m.get('SDNN (ms)')), "Overall Variability"],
+            ["RMSSD", _safe(m.get('RMSSD (ms)')), "Parasympathetic Activity"],
+            ["Analysis Confidence", f"{m.get('Confidence (%)','N/A')}%", "Metric Reliability"],
+            ["Signal Quality", sqi.get('quality_label', 'N/A'), f"SQI Score: {sqi.get('overall_sqi','N/A')}%"]
         ]
-        t_sum = Table(summary_data, colWidths=[4*cm, 4*cm, 8*cm])
+        t_sum = Table(summary_data, colWidths=[4.5*cm, 3.5*cm, 8*cm])
         t_sum.setStyle(TableStyle([
             ('GRID', (0,0), (-1,-1), 0.5, rl_colors.grey),
             ('BACKGROUND', (0,0), (-1,0), rl_colors.HexColor("#d5e8f7")),
@@ -560,7 +623,7 @@ def main():
 
     section_header("Export Options")
     
-    col_pdf, col_docx, _ = st.columns([1, 1, 2])
+    col_pdf, col_docx, col_latex, _ = st.columns([1, 1, 1, 1])
     
     with col_pdf:
         if st.button("Generate PDF Report", use_container_width=True):
@@ -578,6 +641,14 @@ def main():
         if "docx_bytes" in st.session_state:
             st.download_button("Download DOCX", data=st.session_state["docx_bytes"], file_name="HRV_Report.docx", use_container_width=True)
 
+    with col_latex:
+        if st.button("Generate LaTeX Source", use_container_width=True):
+            with st.spinner("Building LaTeX..."):
+                st.session_state["latex_src"] = build_latex_report(metrics_dict, settings, sqi_cache)
+                
+        if "latex_src" in st.session_state:
+            st.download_button("Download LaTeX", data=st.session_state["latex_src"], file_name="HRV_Report.tex", mime="text/plain", use_container_width=True)
+
     st.markdown("---")
     section_header("Clinical Interpretation & Risk Summary")
 
@@ -590,6 +661,7 @@ def main():
         sqi     = sqi_cache.get(fname, {})
         lf_hf   = m.get("LF/HF Ratio", float('nan'))
         sqi_lbl = sqi.get("quality_label", "—") if sqi else "—"
+        conf    = m.get("Confidence (%)", 100)
 
         # Compute risk
         raw_rr_f = raw_rr_cache.get(fname)
@@ -599,11 +671,14 @@ def main():
             import numpy as _np
             _msk = _deb(raw_rr_f)
             pct_e = float(_np.sum(_msk)) / len(raw_rr_f) * 100
-        risk_res   = classify_cardiovascular_risk(m, pct_ectopic=pct_e, use_ml=True)
+        
+        # Pass SQI to risk classifier for adaptive confidence
+        risk_res   = classify_cardiovascular_risk(m, pct_ectopic=pct_e, use_ml=True, sqi=sqi)
         risk_level = risk_res["risk_level"]
         risk_color = RISK_COLORS.get(risk_level, "#c3f400")
         risk_icon  = RISK_ICONS.get(risk_level, "—")
         risk_score = risk_res["score"]
+        risk_conf  = risk_res["confidence"]
 
         lf_hf_str = f"{lf_hf:.2f}" if isinstance(lf_hf, float) and lf_hf == lf_hf else "N/A"
         st.markdown(f"""
@@ -619,6 +694,8 @@ def main():
               </span>
               <span style="background:#c3f400;color:#000;font-size:0.6rem;
                            padding:0.15rem 0.5rem;border-radius:0.2rem;">SQI: {sqi_lbl}</span>
+              <span style="background:#00daf3;color:#000;font-size:0.6rem;
+                           padding:0.15rem 0.5rem;border-radius:0.2rem;">Confidence: {risk_conf:.0f}%</span>
             </div>
           </div>
           <div style="font-size:0.8rem;color:#bac9cc;">
@@ -631,7 +708,7 @@ def main():
     # ── Heart disease section header ───────────────────────────────────────────
     st.markdown("---")
     section_header("Heart Disease Risk Assessment (All Files)")
-    st.info("For detailed per-metric breakdown and ML confidence scores, visit **Dashboard 09 · Heart Disease Detection**.")
+    st.info("For detailed per-metric breakdown and ML confidence scores, visit **Dashboard 10 · Heart Disease Detection**.")
 
 
 if __name__ == "__main__":

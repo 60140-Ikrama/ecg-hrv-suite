@@ -213,7 +213,9 @@ def main():
 
     # ── Run classifier ─────────────────────────────────────────────────────────
     with st.spinner("Running cardiovascular risk analysis…"):
-        result = classify_cardiovascular_risk(metrics, pct_ectopic=pct_ectopic, use_ml=True)
+        # Get SQI from cache
+        sqi = sqi_cache.get(active, {})
+        result = classify_cardiovascular_risk(metrics, pct_ectopic=pct_ectopic, use_ml=True, sqi=sqi)
 
     risk_level = result["risk_level"]
     style      = RISK_STYLES.get(risk_level, RISK_STYLES["Normal"])
@@ -224,15 +226,21 @@ def main():
                 border-radius:0.6rem;padding:1.25rem 1.5rem;margin-bottom:1.25rem;
                 display:flex;align-items:center;gap:1.5rem;">
       <div style="font-size:3rem;line-height:1;">{style['icon']}</div>
-      <div>
-        <div style="font-size:1.5rem;font-weight:900;color:{style['color']};
-                    font-family:'Manrope',sans-serif;">{risk_level}</div>
+      <div style="flex-grow:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:1.5rem;font-weight:900;color:{style['color']};
+                      font-family:'Manrope',sans-serif;">{risk_level}</div>
+          <div style="background:#00daf322;border:1px solid #00daf3;color:#00daf3;
+                      font-size:0.6rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:1rem;">
+            🛡️ SQI-AWARE ADAPTIVE PIPELINE
+          </div>
+        </div>
         <div style="font-size:0.8rem;color:{COLORS['on_surface_variant']};margin-top:0.15rem;">
           Risk Score: <strong style="color:{style['color']};">{result['score']:.0f} / 100</strong>
           &nbsp;·&nbsp; Confidence: <strong>{result['confidence']:.0f}%</strong>
           &nbsp;·&nbsp; Method: {result['method']}
         </div>
-        <div style="font-size:0.75rem;color:{COLORS['outline']};margin-top:0.25rem;">File: {active}</div>
+        <div style="font-size:0.75rem;color:{COLORS['outline']};margin-top:0.25rem;">File: {active} | SQI: {sqi.get('overall_sqi','N/A')}% ({sqi.get('quality_label','N/A')})</div>
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -305,7 +313,9 @@ def main():
                 from utils.hrv_analysis import detect_ectopic_beats as _deb
                 msk_f = _deb(rr_f)
                 pct_e = float(np.sum(msk_f)) / len(rr_f) * 100
-            r_f = classify_cardiovascular_risk(m, pct_ectopic=pct_e, use_ml=True)
+            # Pass SQI for each file in multi-view
+            sqi_f = sqi_cache.get(f, {})
+            r_f = classify_cardiovascular_risk(m, pct_ectopic=pct_e, use_ml=True, sqi=sqi_f)
             all_html += _risk_card(f, r_f)
         st.markdown(all_html, unsafe_allow_html=True)
 

@@ -115,7 +115,7 @@ def compute_sqi(signal: np.ndarray, sfreq: float) -> dict:
     hf_mask = f > 40
     try:
         if np.sum(hf_mask) > 1 and qrs_power > 0:
-            noise_power = float(np.trapz(psd[hf_mask], f[hf_mask]))
+            noise_power = float(_trapz(psd[hf_mask], f[hf_mask]))
             snr_db = float(np.clip(10 * np.log10(qrs_power / max(noise_power, 1e-12)), -10, 40))
         else:
             snr_db = 20.0
@@ -125,6 +125,9 @@ def compute_sqi(signal: np.ndarray, sfreq: float) -> dict:
     # 5. Composite SQI
     overall = 0.40 * spectral_sqi + 0.30 * kurtosis_sqi + 0.30 * baseline_sqi
     overall = float(np.clip(overall, 0, 100))
+
+    # 6. Stability Check (R-peak consistency) - placeholder for now
+    # In practice, this would be computed after R-peak detection
 
     label = ("Excellent" if overall >= 75 else
              "Good"      if overall >= 55 else
@@ -138,7 +141,44 @@ def compute_sqi(signal: np.ndarray, sfreq: float) -> dict:
         "snr_db":        round(snr_db, 1),
         "overall_sqi":   round(overall, 1),
         "quality_label": label,
+        "confidence_multiplier": round(np.clip(overall / 100.0, 0.4, 1.0), 2)
     }
+
+
+# ── ADAPTIVE PREPROCESSING ──────────────────────────────────────────────────
+
+def adaptive_preprocess_ecg(signal: np.ndarray, sfreq: float,
+                            sqi: dict,
+                            lowcut: float = 0.5, highcut: float = 40.0,
+                            filter_order: int = 4) -> tuple[np.ndarray, str]:
+    """
+    Adaptive Signal Quality-Aware Preprocessing.
+    Selects filtering strategy based on SQI score.
+    """
+    score = sqi.get("overall_sqi", 50)
+    
+    if score >= 75:
+        # HIGH QUALITY: Minimal filtering to preserve QRS morphology
+        strategy = "High-Fidelity (Minimal Filtering)"
+        clean = preprocess_ecg(signal, sfreq, lowcut=lowcut, highcut=highcut, 
+                               remove_baseline=True, noise_method="None", 
+                               filter_order=filter_order)
+    elif score >= 40:
+        # MEDIUM QUALITY: Standard filtering + Powerline suppression
+        strategy = "Balanced Adaptive (Standard Denoising)"
+        clean = preprocess_ecg(signal, sfreq, lowcut=lowcut, highcut=highcut, 
+                               remove_baseline=True, noise_method="Powerline 50Hz", 
+                               filter_order=filter_order + 1)
+    else:
+        # LOW QUALITY: Maximum denoising (Wavelet + Baseline + Notch)
+        strategy = "Aggressive Restoration (Max Denoising)"
+        clean = preprocess_ecg(signal, sfreq, lowcut=lowcut, highcut=highcut, 
+                               remove_baseline=True, noise_method="Wavelet", 
+                               filter_order=max(filter_order, 5))
+        # Add a secondary notch filter for 60Hz just in case
+        clean = apply_notch_filter(clean, sfreq, freq=60.0)
+        
+    return clean, strategy
 
 
 # ── FULL PIPELINE ─────────────────────────────────────────────────────────────

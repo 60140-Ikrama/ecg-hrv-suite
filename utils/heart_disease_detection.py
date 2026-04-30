@@ -429,19 +429,17 @@ def classify_cardiovascular_risk(
     metrics: dict,
     pct_ectopic: float = 0.0,
     use_ml: bool = True,
+    sqi: dict | None = None,
 ) -> dict:
     """
-    Full cardiovascular risk classification.
-
-    Runs rule-based classifier (always) and optionally ML classifier.
-    Returns a merged result with the rule-based flags and the best
-    available confidence estimate.
+    Full cardiovascular risk classification with SQI awareness.
 
     Parameters
     ----------
     metrics     : merged HRV metrics dict
     pct_ectopic : % ectopic beats (0–100)
     use_ml      : attempt ML classification if sklearn is available
+    sqi         : signal quality dictionary
 
     Returns
     -------
@@ -457,5 +455,23 @@ def classify_cardiovascular_risk(
                 rule["confidence"] = round((rule["confidence"] + ml["confidence"]) / 2, 1)
                 rule["method"]     = "Rule-Based + ML-Enhanced"
             rule["ml_result"]  = ml
+
+    # SQI Awareness: Penalize confidence if signal quality is low
+    if sqi:
+        sqi_score = sqi.get("overall_sqi", 100)
+        # Reduce confidence linearly below 80 SQI
+        if sqi_score < 80:
+            penalty = (80 - sqi_score) * 0.5
+            rule["confidence"] = round(max(10, rule["confidence"] - penalty), 1)
+            
+            if sqi_score < 40:
+                rule["explanation"] += (
+                    "\n\n⚠️ **Warning:** Low signal quality detected. Analysis confidence is reduced; "
+                    "results should be interpreted with extreme caution."
+                )
+            elif sqi_score < 65:
+                 rule["explanation"] += (
+                    "\n\nℹ️ **Note:** Moderate signal noise detected. Confidence is adjusted accordingly."
+                )
 
     return rule

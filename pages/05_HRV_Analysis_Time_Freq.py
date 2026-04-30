@@ -39,13 +39,18 @@ def main():
         st.warning("⚠️  Process RR intervals in **⏱️ RR & Ectopics** first.")
         return
 
+    # Get confidence multiplier from SQI
+    sqi_cache = st.session_state.get("sqi_cache", {}).get(active, {})
+    conf_mult = sqi_cache.get("confidence_multiplier", 1.0)
+    conf_score = round(conf_mult * 100, 1)
+
     clean_rr = st.session_state["clean_rr_intervals"][active]
     tab1, tab2 = st.tabs(["📈 Dashboard 6 · Time Domain",
                            "📊 Dashboard 7 · Frequency Domain"])
 
     # ════════════════════════════════════════════════════════════════════════
     with tab1:
-        time_m = get_time_domain_hrv(clean_rr)
+        time_m = get_time_domain_hrv(clean_rr, confidence_multiplier=conf_mult)
 
         if "metrics" not in st.session_state:
             st.session_state["metrics"] = {}
@@ -58,8 +63,16 @@ def main():
         rmssd_pct = min(int(time_m.get("RMSSD (ms)", 0)), 100)
         pnn50_pct = min(int(time_m.get("pNN50 (%)",  0)), 100)
         cv_pct    = min(int(time_m.get("CV (%)",     0) * 5), 100)
+        
+        conf_color = "#c3f400" if conf_score >= 80 else "#ffba38" if conf_score >= 50 else "#ff4b4b"
 
         st.markdown(f"""
+        <div style="display:flex;justify-content:flex-end;margin-bottom:0.5rem;">
+          <div style="background:{conf_color}22;border:1px solid {conf_color};color:{conf_color};
+                      padding:0.2rem 0.6rem;border-radius:1rem;font-size:0.7rem;font-weight:700;">
+            🛡️ Analysis Confidence: {conf_score}%
+          </div>
+        </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:0.75rem;">
           {kpi_card("Mean RR", f"{time_m.get('Mean RR (ms)',0):.0f}", "ms",
                     accent="primary", bar_pct=60)}
@@ -142,7 +155,7 @@ def main():
 
         freq_m, freqs, psd = get_freq_domain_hrv(
             clean_rr, vlf_band=vlf_band, lf_band=lf_band, hf_band=hf_band,
-            nperseg=nperseg, noverlap=noverlap)
+            nperseg=nperseg, noverlap=noverlap, confidence_multiplier=conf_mult)
 
         if freq_m is None:
             st.warning("Not enough RR data for frequency analysis (need > 10 beats).")
