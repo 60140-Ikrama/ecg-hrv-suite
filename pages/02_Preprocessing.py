@@ -10,7 +10,8 @@ from components.theme import (inject_stitch_theme, sentinel_header,
 from components.sidebar_settings import render_sidebar_settings
 from utils.signal_processing import (remove_baseline_wander, apply_bandpass_filter,
                                       apply_notch_filter, apply_wavelet_denoise,
-                                      apply_adaptive_filter, preprocess_ecg, compute_sqi)
+                                      apply_adaptive_filter, preprocess_ecg, compute_sqi,
+                                      adaptive_preprocess_ecg)
 
 st.set_page_config(page_title="Preprocessing · Clinical Sentinel",
                    page_icon="🧹", layout="wide")
