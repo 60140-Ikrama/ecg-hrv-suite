@@ -18,9 +18,9 @@ st.set_page_config(
 
 # ── Risk level styling ─────────────────────────────────────────────────────────
 RISK_STYLES = {
-    "Normal":    {"color": "#4caf7d", "bg": "#0d2a1a", "border": "#4caf7d", "icon": "✅"},
-    "Mild Risk": {"color": "#ffba38", "bg": "#2a1e00", "border": "#ffba38", "icon": "⚠️"},
-    "High Risk": {"color": "#f44336", "bg": "#2a0a0a", "border": "#f44336", "icon": "🚨"},
+    "Normal":    {"color": "#c3f400", "bg": "#12140c", "border": "#c3f400", "icon": "✅"},
+    "Mild Risk": {"color": "#ffba38", "bg": "#1a1608", "border": "#ffba38", "icon": "⚠️"},
+    "High Risk": {"color": "#ffb4ab", "bg": "#1a0d0d", "border": "#ffb4ab", "icon": "🚨"},
 }
 
 STATUS_COLORS = {
@@ -105,27 +105,36 @@ def _probability_bar(ml_result: dict) -> go.Figure:
 
 
 def _flags_table_html(flags: dict) -> str:
-    """Render the metric flags as styled HTML cards."""
+    """Render the metric flags as premium styled HTML cards."""
     rows = ""
+    # Define color overrides to match the user's high-end aesthetic
+    COLOR_MAP = {
+        "normal":    "#c3f400", # Electric Lime
+        "mild_risk": "#ffba38", # Amber
+        "high_risk": "#ffb4ab", # Soft Red
+        "unavailable": "#849396"
+    }
+    
     for metric, info in flags.items():
         status  = info.get("status", "unavailable")
-        color   = STATUS_COLORS.get(status, COLORS["on_surface_variant"])
+        color   = COLOR_MAP.get(status, "#849396")
         icon    = {"normal": "✅", "mild_risk": "⚠️", "high_risk": "🚨",
                    "unavailable": "—"}.get(status, "—")
         value   = info.get("value", "N/A")
         note    = info.get("clinical_note", "")
         thr     = info.get("threshold", "")
+        
         rows += f"""
         <div style="border-left:3px solid {color};padding:0.6rem 0.8rem;
-                    margin-bottom:0.5rem;background:{COLORS['surface_container']};
-                    border-radius:0 0.3rem 0.3rem 0;">
+                    margin-bottom:0.5rem;background:#1e2023;
+                    border-radius:0 0.3rem 0.3rem 0;transition:all 0.2s ease;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem;">
-            <span style="font-weight:700;color:{COLORS['on_surface']};font-size:0.85rem;">{icon} {metric}</span>
+            <span style="font-weight:700;color:#e2e2e6;font-size:0.85rem;">{icon} {metric}</span>
             <span style="background:{color}22;color:{color};font-size:0.75rem;font-weight:700;
                          padding:0.1rem 0.5rem;border-radius:1rem;border:1px solid {color}55;">{value}</span>
           </div>
-          <div style="font-size:0.75rem;color:{COLORS['on_surface_variant']};margin-bottom:0.15rem;">{note}</div>
-          <div style="font-size:0.68rem;color:{COLORS['outline']};font-family:monospace;">Threshold: {thr}</div>
+          <div style="font-size:0.75rem;color:#bac9cc;margin-bottom:0.15rem;">{note}</div>
+          <div style="font-size:0.68rem;color:#849396;font-family:monospace;">Threshold: {thr}</div>
         </div>
         """
     return f'<div style="margin-top:0.5rem;">{rows}</div>'

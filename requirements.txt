@@ -8,7 +8,7 @@ PyWavelets
 mne
 reportlab
 python-docx
-kaleido
+kaleido==0.2.1
 scikit-learn
 qrcode[pil]
 Pillow

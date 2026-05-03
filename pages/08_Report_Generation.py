@@ -524,6 +524,163 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
     return buf.getvalue()
 
 
+def build_html_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> str:
+    """Generates a self-contained, premium HTML research report (MATLAB Publish style)."""
+    import base64
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    html = [
+        "<!DOCTYPE html>",
+        "<html lang='en'>",
+        "<head>",
+        "  <meta charset='UTF-8'>",
+        "  <meta name='viewport' content='width=device-width, initial-scale=1.0'>",
+        "  <title>Clinical Sentinel · ECG-HRV Research Report</title>",
+        "  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Manrope:wght@700;800&family=Fira+Code&display=swap' rel='stylesheet'>",
+        "  <style>",
+        "    :root { --primary: #003366; --secondary: #1a5276; --accent: #c3f400; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --muted: #64748b; }",
+        "    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; margin: 0; padding: 0; }",
+        "    .container { max-width: 900px; margin: 40px auto; background: var(--card); box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-radius: 12px; padding: 60px; }",
+        "    header { border-bottom: 2px solid #edf2f7; padding-bottom: 30px; margin-bottom: 40px; }",
+        "    h1 { font-family: 'Manrope'; font-weight: 800; font-size: 2.5rem; color: var(--primary); margin: 0; }",
+        "    .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.9rem; margin-top: 15px; }",
+        "    nav { position: sticky; top: 20px; float: left; width: 220px; margin-left: -280px; font-size: 0.85rem; }",
+        "    nav ul { list-style: none; padding: 0; }",
+        "    nav li { margin-bottom: 8px; }",
+        "    nav a { color: var(--muted); text-decoration: none; transition: 0.2s; }",
+        "    nav a:hover { color: var(--secondary); }",
+        "    section { margin-bottom: 50px; scroll-margin-top: 40px; }",
+        "    h2 { font-family: 'Manrope'; font-size: 1.5rem; color: var(--secondary); border-left: 4px solid var(--accent); padding-left: 15px; margin-bottom: 25px; }",
+        "    h3 { font-size: 1.1rem; margin-top: 30px; color: var(--primary); }",
+        "    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }",
+        "    th { background: #f1f5f9; text-align: left; padding: 12px; font-weight: 600; border-bottom: 2px solid #e2e8f0; }",
+        "    td { padding: 12px; border-bottom: 1px solid #edf2f7; }",
+        "    .metric-val { font-family: 'Fira Code', monospace; font-weight: 600; color: #0f172a; }",
+        "    .chart-container { margin: 30px 0; text-align: center; background: #fafafa; border-radius: 8px; padding: 20px; border: 1px solid #f1f5f9; }",
+        "    .chart-container img { max-width: 100%; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }",
+        "    .caption { font-size: 0.8rem; color: var(--muted); margin-top: 10px; font-style: italic; }",
+        "    .risk-banner { padding: 20px; border-radius: 8px; display: flex; align-items: center; gap: 20px; margin: 30px 0; }",
+        "    footer { text-align: center; margin-top: 60px; padding-top: 30px; border-top: 1px solid #edf2f7; color: var(--muted); font-size: 0.8rem; }",
+        "    @media (max-width: 1200px) { nav { display: none; } .container { margin: 20px; padding: 30px; } }",
+        "  </style>",
+        "</head>",
+        "<body>",
+        "  <div class='container'>",
+        "    <nav><ul>",
+        "      <li><a href='#methodology'>1. Methodology</a></li>",
+        "      <li><a href='#results'>2. Analysis Results</a></li>",
+        "      <li><a href='#visualization'>3. Visualization</a></li>",
+        "      <li><a href='#interpretation'>4. Clinical Assessment</a></li>",
+        "    </ul></nav>",
+        "    <header>",
+        "      <h1>ECG & HRV Research Report</h1>",
+        "      <div class='meta'>",
+        f"        <span>Automated Research Suite v2.2.0</span>",
+        f"        <span>Date: {ts}</span>",
+        "      </div>",
+        "    </header>",
+        "",
+        "    <section id='methodology'>",
+        "      <h2>1. Methodology</h2>",
+        "      <p>This report presents an automated cardiovascular assessment using Signal Quality-Aware Adaptive Analysis. All signals were processed through a Butterworth bandpass filter and ectopic beat correction was applied where necessary.</p>",
+        "      <table>",
+        "        <tr><td>Sampling Frequency</td><td class='metric-val'>" + str(settings.get('sfreq', 250)) + " Hz</td></tr>",
+        "        <tr><td>Bandpass Filter</td><td class='metric-val'>" + str(settings.get('lowcut', 0.5)) + " - " + str(settings.get('highcut', 40)) + " Hz</td></tr>",
+        "        <tr><td>R-Peak Algorithm</td><td class='metric-val'>" + str(settings.get('rpeak_method', 'NeuroKit')) + "</td></tr>",
+        "      </table>",
+        "    </section>"
+    ]
+
+    for fname, m in metrics_dict.items():
+        sqi = sqi_cache.get(fname, {})
+        html += [
+            f"<section id='results-{fname}'>",
+            f"  <h2>2. Analysis for File: {fname}</h2>",
+            f"  <p>Overall Signal Quality Index (SQI): <strong>{sqi.get('overall_sqi','N/A')}%</strong> ({sqi.get('quality_label','N/A')})</p>",
+            "  <h3>Time-Domain Metrics</h3>",
+            "  <table>",
+            "    <thead><tr><th>Metric</th><th>Value</th><th>Unit</th><th>Description</th></tr></thead>",
+            "    <tbody>",
+            f"      <tr><td>Mean RR</td><td class='metric-val'>{_safe(m.get('Mean RR (ms)'))}</td><td>ms</td><td>Average beat-to-beat interval</td></tr>",
+            f"      <tr><td>SDNN</td><td class='metric-val'>{_safe(m.get('SDNN (ms)'))}</td><td>ms</td><td>Overall heart rate variability</td></tr>",
+            f"      <tr><td>RMSSD</td><td class='metric-val'>{_safe(m.get('RMSSD (ms)'))}</td><td>ms</td><td>Parasympathetic activity</td></tr>",
+            f"      <tr><td>Mean HR</td><td class='metric-val'>{_safe(m.get('Mean HR (bpm)'))}</td><td>bpm</td><td>Average heart rate</td></tr>",
+            "    </tbody>",
+            "  </table>"
+        ]
+
+        # Embed Images
+        html.append("<section id='visualization'>")
+        html.append("  <h3>Diagnostic Visualizations</h3>")
+        charts = _generate_report_charts(fname)
+        chart_order = [
+            ("ecg_raw_filt",  "Figure 1: ECG Signal (Raw vs Filtered)"),
+            ("rpeaks",        "Figure 2: R-Peak Detection Overlay"),
+            ("rr_tachogram",  "Figure 3: RR Tachogram (Interval Variation)"),
+            ("psd",           "Figure 4: Power Spectral Density (LF/HF Bands)"),
+            ("poincare",      "Figure 5: Poincaré Plot (Non-linear Scatter)"),
+        ]
+        
+        for ckey, clabel in chart_order:
+            if ckey in charts:
+                b64 = base64.b64encode(charts[ckey]).decode()
+                html += [
+                    "  <div class='chart-container'>",
+                    f"    <img src='data:image/png;base64,{b64}' alt='{clabel}'>",
+                    f"    <div class='caption'>{clabel}</div>",
+                    "  </div>"
+                ]
+        html.append("</section>")
+
+        # Clinical Assessment & Risk
+        interp = interpret_hrv(m, m)
+        raw_rr_f = st.session_state.get("raw_rr_intervals", {}).get(fname)
+        pct_e = 0.0
+        if raw_rr_f is not None and len(raw_rr_f) > 0:
+            from utils.hrv_analysis import detect_ectopic_beats as _deb
+            _msk = _deb(raw_rr_f)
+            pct_e = float(np.sum(_msk)) / len(raw_rr_f) * 100
+        
+        risk_res = classify_cardiovascular_risk(m, pct_ectopic=pct_e, use_ml=False)
+        risk_level = risk_res["risk_level"]
+        risk_color = {"Normal": "#c3f400", "Mild Risk": "#ffba38", "High Risk": "#ffb4ab"}.get(risk_level, "#64748b")
+        risk_icon  = {"Normal": "✅", "Mild Risk": "⚠️", "High Risk": "🚨"}.get(risk_level, "")
+
+        html += [
+            "    <section id='interpretation'>",
+            "      <h2>3. Cardiovascular Risk Assessment</h2>",
+            f"      <div style='background:#f1f5f9; border-left: 8px solid {risk_color}; padding: 25px; border-radius: 8px; margin-bottom: 30px;'>",
+            f"        <div style='font-size: 1.8rem; font-weight: 800; color: #0f172a;'>{risk_icon} {risk_level}</div>",
+            f"        <div style='font-size: 1rem; color: #475569;'>Risk Score: <strong>{risk_res['score']:.0f}/100</strong> | Confidence: <strong>{risk_res['confidence']:.0f}%</strong></div>",
+            "      </div>",
+            "      <p><strong>Clinical Interpretation:</strong></p>",
+            f"      <p style='background: #fff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px;'>{interp.get('sdnn_class','—')}. {interp.get('autonomic','—')}. {interp.get('lf_hf_class','—')}.</p>",
+            "      <h3>Risk Factor Breakdown</h3>"
+        ]
+
+        for metric, info in risk_res.get("flags", {}).items():
+            status = info.get("status", "unavailable")
+            m_color = {"normal": "#c3f400", "mild_risk": "#ffba38", "high_risk": "#f44336"}.get(status, "#64748b")
+            m_icon  = {"normal": "✅", "mild_risk": "⚠️", "high_risk": "🚨"}.get(status, "—")
+            html += [
+                f"<div style='border-left: 4px solid {m_color}; padding: 10px 15px; background: #fff; border: 1px solid #f1f5f9; margin-bottom: 10px; border-radius: 4px;'>",
+                f"  <div style='display:flex; justify-content:space-between; font-weight:600; font-size: 0.9rem;'><span>{m_icon} {metric}</span><span style='color:{m_color};'>{info.get('value','N/A')}</span></div>",
+                f"  <div style='font-size: 0.8rem; color: #64748b;'>{info.get('clinical_note','')}</div>",
+                "</div>"
+            ]
+        html.append("    </section>")
+
+    html += [
+        "    <footer>",
+        "      <p>&copy; 2026 Clinical Sentinel Research Suite. All rights reserved.</p>",
+        "      <p>This report is intended for research purposes only.</p>",
+        "    </footer>",
+        "  </div>",
+        "</body>",
+        "</html>"
+    ]
+    return "\n".join(html)
+
 def build_docx_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> bytes:
     import docx
     from docx.shared import Inches, Pt
@@ -626,7 +783,7 @@ def main():
 
     section_header("Export Options")
     
-    col_pdf, col_docx, col_latex, _ = st.columns([1, 1, 1, 1])
+    col_pdf, col_docx, col_html, col_latex = st.columns([1, 1, 1, 1])
     
     with col_pdf:
         if st.button("Generate PDF Report", use_container_width=True):
@@ -641,7 +798,7 @@ def main():
             st.download_button("Download PDF", data=st.session_state["pdf_bytes"], file_name="HRV_Report.pdf", mime="application/pdf", use_container_width=True)
 
     with col_docx:
-        if st.button("Generate DOCX Report", use_container_width=True):
+        if st.button("Generate DOCX", use_container_width=True):
             with st.spinner("Building Word Doc..."):
                 st.session_state["report_errors"] = []
                 st.session_state["docx_bytes"] = build_docx_report(metrics_dict, settings, sqi_cache)
@@ -652,8 +809,20 @@ def main():
         if "docx_bytes" in st.session_state:
             st.download_button("Download DOCX", data=st.session_state["docx_bytes"], file_name="HRV_Report.docx", use_container_width=True)
 
+    with col_html:
+        if st.button("Publish (HTML)", use_container_width=True, help="Generate a self-contained interactive MATLAB-style report"):
+            with st.spinner("Publishing to HTML..."):
+                st.session_state["report_errors"] = []
+                st.session_state["html_src"] = build_html_report(metrics_dict, settings, sqi_cache)
+                if st.session_state.get("report_errors"):
+                    for err in st.session_state["report_errors"]:
+                        st.warning(f"⚠️ {err}")
+                
+        if "html_src" in st.session_state:
+            st.download_button("Download Published HTML", data=st.session_state["html_src"], file_name="HRV_Published_Report.html", mime="text/html", use_container_width=True)
+
     with col_latex:
-        if st.button("Generate LaTeX Source", use_container_width=True):
+        if st.button("LaTeX Source", use_container_width=True):
             with st.spinner("Building LaTeX..."):
                 st.session_state["latex_src"] = build_latex_report(metrics_dict, settings, sqi_cache)
                 
@@ -686,27 +855,34 @@ def main():
         # Pass SQI to risk classifier for adaptive confidence
         risk_res   = classify_cardiovascular_risk(m, pct_ectopic=pct_e, use_ml=True, sqi=sqi)
         risk_level = risk_res["risk_level"]
-        risk_color = RISK_COLORS.get(risk_level, "#c3f400")
-        risk_icon  = RISK_ICONS.get(risk_level, "—")
+        
+        # New Hero-style banner colors
+        banner_styles = {
+            "Normal":    {"color": "#c3f400", "bg": "#12140c", "border": "#c3f400", "icon": "✅"},
+            "Mild Risk": {"color": "#ffba38", "bg": "#1a1608", "border": "#ffba38", "icon": "⚠️"},
+            "High Risk": {"color": "#ffb4ab", "bg": "#1a0d0d", "border": "#ffb4ab", "icon": "🚨"},
+        }
+        bst = banner_styles.get(risk_level, banner_styles["Normal"])
+        
         risk_score = risk_res["score"]
         risk_conf  = risk_res["confidence"]
 
         lf_hf_str = f"{lf_hf:.2f}" if isinstance(lf_hf, float) and lf_hf == lf_hf else "N/A"
         st.markdown(f"""
-        <div style="background:#1a1c1f;border:1px solid #1e2023;
-                    border-left:4px solid {risk_color};border-radius:0.375rem;
+        <div style="background:{bst['bg']};border:1px solid {bst['border']};
+                    border-left:4px solid {bst['border']};border-radius:0.4rem;
                     padding:1rem;margin-bottom:0.75rem;">
           <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
             <span style="font-weight:800;color:#849396;">{fname}</span>
             <div style="display:flex;gap:0.4rem;align-items:center;">
-              <span style="background:{risk_color};color:#000;font-size:0.6rem;
-                           font-weight:700;padding:0.15rem 0.5rem;border-radius:0.2rem;">
-                {risk_icon} {risk_level} ({risk_score:.0f}/100)
+              <span style="background:{bst['color']};color:#000;font-size:0.6rem;
+                           font-weight:800;padding:0.15rem 0.5rem;border-radius:0.2rem;">
+                {bst['icon']} {risk_level} ({risk_score:.0f}/100)
               </span>
-              <span style="background:#c3f400;color:#000;font-size:0.6rem;
-                           padding:0.15rem 0.5rem;border-radius:0.2rem;">SQI: {sqi_lbl}</span>
               <span style="background:#00daf3;color:#000;font-size:0.6rem;
-                           padding:0.15rem 0.5rem;border-radius:0.2rem;">Confidence: {risk_conf:.0f}%</span>
+                           padding:0.15rem 0.5rem;border-radius:0.2rem;font-weight:700;">SQI: {sqi_lbl}</span>
+              <span style="background:#bac9cc;color:#000;font-size:0.6rem;
+                           padding:0.15rem 0.5rem;border-radius:0.2rem;font-weight:700;">Confidence: {risk_conf:.0f}%</span>
             </div>
           </div>
           <div style="font-size:0.8rem;color:#bac9cc;">
