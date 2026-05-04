@@ -59,7 +59,10 @@ def main():
                             st.session_state["sfreq"] = det_fs
                         # Compute SQI immediately
                         sfreq = st.session_state.get("sfreq", 250.0)
-                        st.session_state["sqi_cache"][f.name] = compute_sqi(sig_arr, sfreq)
+                        sqi_res = compute_sqi(sig_arr, sfreq)
+                        # Ensure the sfreq used is tied to this file in cache
+                        sqi_res["sfreq"] = sfreq
+                        st.session_state["sqi_cache"][f.name] = sqi_res
                         st.toast(f"✅ {f.name}  ({len(sig_arr):,} samples)", icon="📡")
                 except Exception as e:
                     st.error(f"❌ {f.name}: {e}")
@@ -96,7 +99,9 @@ def main():
                         if det_fs and st.session_state.get("auto_sfreq"):
                             st.session_state["sfreq"] = det_fs
                         sfreq = st.session_state.get("sfreq", 250.0)
-                        st.session_state["sqi_cache"][filename] = compute_sqi(sig_arr, sfreq)
+                        sqi_res = compute_sqi(sig_arr, sfreq)
+                        sqi_res["sfreq"] = sfreq
+                        st.session_state["sqi_cache"][filename] = sqi_res
                         st.session_state["active_file"] = filename
                         st.success(f"✅ {filename} ({len(sig_arr):,} samples)", icon="📡")
                 except Exception as e:

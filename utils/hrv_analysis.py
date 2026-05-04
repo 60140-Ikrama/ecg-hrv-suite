@@ -201,7 +201,13 @@ def get_nonlinear_hrv(rr_ms: np.ndarray, confidence_multiplier: float = 1.0) -> 
 
 def sample_entropy(rr_ms: np.ndarray, m: int = 2,
                    r_factor: float = 0.2) -> float:
-    """Sample Entropy (SampEn). O(N²) — limit input to ≤300 points."""
+    """
+    Sample Entropy (SampEn). O(N²) — Enforces 300-point cap to prevent hangs.
+    """
+    # Safety: Enforce 300-point cap for O(N^2) complexity
+    if len(rr_ms) > 300:
+        rr_ms = rr_ms[:300]
+        
     N = len(rr_ms)
     if N < 2 * m + 1:
         return float('nan')
@@ -224,7 +230,13 @@ def sample_entropy(rr_ms: np.ndarray, m: int = 2,
 
 def approximate_entropy(rr_ms: np.ndarray, m: int = 2,
                         r_factor: float = 0.2) -> float:
-    """Approximate Entropy (ApEn)."""
+    """
+    Approximate Entropy (ApEn). O(N²) — Enforces 300-point cap to prevent hangs.
+    """
+    # Safety: Enforce 300-point cap for O(N^2) complexity
+    if len(rr_ms) > 300:
+        rr_ms = rr_ms[:300]
+        
     N = len(rr_ms)
     if N < m + 2:
         return float('nan')
@@ -366,7 +378,7 @@ def interpret_hrv(time_metrics: dict, freq_metrics: dict) -> dict:
     else:
         interp["sdnn_class"] = f"Reduced HRV — potential autonomic dysfunction (SDNN < 50 ms){conf_caveat}."
 
-    if math.isnan(lf_hf):
+    if lf_hf is None or not math.isfinite(lf_hf):
         interp["lf_hf_class"] = "Frequency-domain data unavailable."
     elif lf_hf > 2.0:
         interp["lf_hf_class"] = (f"LF/HF = {lf_hf:.2f} → Sympathetic dominance{conf_caveat}. "
