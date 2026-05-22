@@ -7,7 +7,8 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
                                pipeline_status_bar, kpi_card, section_header,
-                               clinical_interpretation, COLORS, get_plot_layout, set_layout)
+                               clinical_interpretation, COLORS, get_plot_layout, set_layout,
+                               signal_quality_meter, autonomic_balance_bar, ai_insight_panel)
 from components.sidebar_settings import render_sidebar_settings
 from utils.hrv_analysis import (get_time_domain_hrv, get_freq_domain_hrv,
                                  interpret_hrv, analyze_hrv_trend)
@@ -67,33 +68,68 @@ def main():
         conf_color = "#c3f400" if conf_score >= 80 else "#ffba38" if conf_score >= 50 else "#ff4b4b"
 
         st.markdown(f"""
-        <div style="display:flex;justify-content:flex-end;margin-bottom:0.5rem;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:.5rem;gap:.75rem;flex-wrap:wrap;">
           <div style="background:{conf_color}22;border:1px solid {conf_color};color:{conf_color};
-                      padding:0.2rem 0.6rem;border-radius:1rem;font-size:0.7rem;font-weight:700;">
+                      padding:.2rem .6rem;border-radius:1rem;font-size:.7rem;font-weight:700;">
             🛡️ Analysis Confidence: {conf_score}%
           </div>
+          <div style="background:rgba(179,136,255,.12);border:1px solid rgba(179,136,255,.3);
+                      color:#b388ff;padding:.2rem .6rem;border-radius:1rem;font-size:.7rem;font-weight:700;">
+            🧠 AI Engine Active
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:0.75rem;">
-          {kpi_card("Mean RR", f"{time_m.get('Mean RR (ms)',0):.0f}", "ms",
-                    accent="primary", bar_pct=60)}
-          {kpi_card("Mean HR", f"{time_m.get('Mean HR (bpm)',0):.0f}", "bpm",
-                    accent="primary")}
-          {kpi_card("SDNN",    f"{time_m.get('SDNN (ms)',0):.1f}",    "ms",
-                    accent="green", bar_pct=sdnn_pct)}
-          {kpi_card("CV",      f"{time_m.get('CV (%)',0):.2f}",       "%",
-                    accent="green", bar_pct=cv_pct)}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.65rem;margin-bottom:.65rem;">
+          {kpi_card("Mean RR", f"{time_m.get('Mean RR (ms)',0):.0f}", "ms", accent="primary", bar_pct=60)}
+          {kpi_card("Mean HR", f"{time_m.get('Mean HR (bpm)',0):.0f}", "bpm", accent="primary")}
+          {kpi_card("SDNN",    f"{time_m.get('SDNN (ms)',0):.1f}",    "ms",  accent="green", bar_pct=sdnn_pct)}
+          {kpi_card("CV",      f"{time_m.get('CV (%)',0):.2f}",       "%",   accent="green", bar_pct=cv_pct)}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.25rem;">
-          {kpi_card("RMSSD",   f"{time_m.get('RMSSD (ms)',0):.1f}",  "ms",
-                    accent="primary", bar_pct=rmssd_pct)}
-          {kpi_card("SDSD",    f"{time_m.get('SDSD (ms)',0):.1f}",   "ms",
-                    accent="primary")}
-          {kpi_card("NN50",    str(time_m.get("NN50", 0)), "beats",
-                    accent="amber")}
-          {kpi_card("pNN50",   f"{time_m.get('pNN50 (%)',0):.1f}",   "%",
-                    accent="green", bar_pct=pnn50_pct)}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.65rem;margin-bottom:.85rem;">
+          {kpi_card("RMSSD",   f"{time_m.get('RMSSD (ms)',0):.1f}",  "ms",  accent="primary", bar_pct=rmssd_pct)}
+          {kpi_card("SDSD",    f"{time_m.get('SDSD (ms)',0):.1f}",   "ms",  accent="primary")}
+          {kpi_card("NN50",    str(time_m.get('NN50', 0)),            "beats",accent="amber")}
+          {kpi_card("pNN50",   f"{time_m.get('pNN50 (%)',0):.1f}",   "%",   accent="green", bar_pct=pnn50_pct)}
         </div>
         """, unsafe_allow_html=True)
+
+        # HRV Health Score
+        sdnn_v = time_m.get('SDNN (ms)', 0)
+        rmssd_v = time_m.get('RMSSD (ms)', 0)
+        pnn50_v = time_m.get('pNN50 (%)', 0)
+        hrv_score = min(int((sdnn_v/150)*40 + (rmssd_v/80)*35 + (pnn50_v/50)*25), 100)
+        grade = "Excellent" if hrv_score>=85 else "Good" if hrv_score>=65 else "Fair" if hrv_score>=45 else "Poor" if hrv_score>=25 else "Critical"
+        grade_c = "#c3f400" if hrv_score>=65 else "#ffba38" if hrv_score>=45 else "#ff4b4b"
+        col_score, col_stress = st.columns([1,2])
+        with col_score:
+            st.markdown(f"""
+            <div style="background:#111316;border:1px solid #1e2023;border-radius:.6rem;
+                        padding:1.1rem;text-align:center;margin-bottom:.75rem;">
+              <div style="font-family:'Manrope',sans-serif;font-size:3rem;font-weight:900;
+                          color:{grade_c};line-height:1;">{hrv_score}</div>
+              <div style="font-family:'Manrope',sans-serif;font-size:.6rem;font-weight:800;
+                          text-transform:uppercase;letter-spacing:.1em;color:{grade_c};
+                          margin-top:.3rem;">HRV Health: {grade}</div>
+              <div style="font-size:.65rem;color:#849396;margin-top:.2rem;">
+                SDNN-RMSSD-pNN50 composite index
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_stress:
+            stress_lvl = min(int(time_m.get('LF/HF Ratio' if 'LF/HF Ratio' in time_m else 'Mean RR (ms)', 0) / 5 * 100), 100) if sdnn_v > 0 else 50
+            fatigue = max(0, 100 - hrv_score)
+            recovery = hrv_score
+            ai_insight_panel(
+                "HRV Stress & Recovery",
+                conf_score,
+                [
+                    ("🧠", f"Estimated Stress Level: {'Elevated' if stress_lvl>60 else 'Moderate' if stress_lvl>35 else 'Low'} ({stress_lvl}%)",
+                     "#ffba38" if stress_lvl>60 else "#c3f400"),
+                    ("😴", f"Fatigue Index: {fatigue}% — {'Rest recommended' if fatigue>65 else 'Manageable'}",
+                     "#ff4b4b" if fatigue>65 else "#849396"),
+                    ("⚡", f"Recovery Score: {recovery}/100",
+                     "#c3f400" if recovery>=65 else "#ffba38"),
+                ],
+            )
 
         # |ΔRR| bar chart
         section_header("Successive RR Differences (|ΔRR|)")
@@ -256,6 +292,11 @@ def main():
           <div class="clinical-body">{lf_hf_interp.get("lf_hf_class","—")}</div>
         </div>
         """, unsafe_allow_html=True)
+
+        # Autonomic balance bar
+        lf_norm = freq_m.get('LF norm (%)', 50)
+        hf_norm = freq_m.get('HF norm (%)', 50)
+        autonomic_balance_bar(lf_norm, hf_norm)
 
 
 if __name__ == "__main__":

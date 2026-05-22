@@ -56,9 +56,45 @@ def render_sidebar_settings():
           <span class="sb-brand-icon">&#x1FAC0;</span>
           <div>
             <div class="sb-brand-name">Clinical Sentinel</div>
-            <div class="sb-brand-sub">ECG &amp; HRV Analysis Suite</div>
+            <div class="sb-brand-sub">ECG &amp; HRV Suite</div>
           </div>
-          <span class="sb-ver">v2.0</span>
+          <span class="sb-ver">v3.0</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Active patient display
+        active_file = st.session_state.get("active_file", "")
+        n_files = len(st.session_state.get("raw_signals", {}))
+        alert_log = st.session_state.get("alert_log", [])
+        n_alerts  = sum(1 for a in alert_log if not a.get("ack"))
+        has_metrics = bool(st.session_state.get("metrics", {}).get(active_file))
+        file_short = active_file[:20] + "..." if len(active_file) > 20 else active_file
+        status_c = "#c3f400" if has_metrics else "#ffba38" if active_file else "#849396"
+        st.markdown(f"""
+        <div style="background:#0c0e11;border:1px solid #1e2023;border-radius:.4rem;
+                    padding:.6rem .8rem;margin-bottom:.75rem;">
+          <div style="font-family:'Manrope',sans-serif;font-size:.52rem;font-weight:800;
+                      text-transform:uppercase;letter-spacing:.12em;color:#3b494c;margin-bottom:.4rem;">
+            System Status
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.3rem;">
+            <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:.65rem;">
+              <span style="color:#849396;">Active File</span>
+              <span style="color:#c3f5ff;font-weight:600;">{file_short or 'None'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:.65rem;">
+              <span style="color:#849396;">Files Loaded</span>
+              <span style="color:#c3f5ff;font-weight:600;">{n_files}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:.65rem;">
+              <span style="color:#849396;">Analysis</span>
+              <span style="color:{status_c};font-weight:600;">{'Ready' if has_metrics else 'Pending' if active_file else 'No Data'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:.65rem;">
+              <span style="color:#849396;">Alerts</span>
+              <span style="color:{'#ff4b4b' if n_alerts>0 else '#c3f400'};font-weight:600;">{n_alerts} Active</span>
+            </div>
+          </div>
         </div>
         """, unsafe_allow_html=True)
 

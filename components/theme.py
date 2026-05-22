@@ -637,6 +637,236 @@ button[data-baseweb="tab"][aria-selected="true"] {
     border-radius:2rem; font-family:'Inter',sans-serif; font-size:0.6rem; color:#849396;
 }
 .sb-sync-pill .dot { width:5px; height:5px; border-radius:50%; background:#c3f400; animation:blink-dot 1.5s infinite; }
+
+/* ── INDUSTRIAL MEDICAL EXTENSIONS v3.0 ───────────────────────────── */
+
+/* ICU Vitals Card */
+.icu-vitals-card {
+    background: #111316;
+    border: 1px solid #1e2023;
+    border-radius: 0.6rem;
+    padding: 1.1rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.22s ease;
+}
+.icu-vitals-card:hover { border-color: #282a2d; transform: translateY(-2px); }
+.icu-vitals-card .icu-top-bar { position:absolute;top:0;left:0;right:0;height:3px; }
+.icu-vitals-card .icu-v-label {
+    font-family:'Inter',sans-serif; font-size:.55rem; font-weight:700;
+    color:#849396; text-transform:uppercase; letter-spacing:.12em;
+    margin-bottom:.35rem; display:flex; align-items:center; gap:.35rem;
+}
+.icu-vitals-card .icu-v-value {
+    font-family:'Manrope',sans-serif; font-size:2.2rem; font-weight:900;
+    color:#c3f5ff; line-height:1;
+}
+.icu-vitals-card .icu-v-unit { font-size:.8rem; color:#849396; margin-left:.2rem; }
+.icu-vitals-card .icu-v-sub {
+    font-family:'Inter',sans-serif; font-size:.62rem; color:#849396; margin-top:.3rem;
+}
+
+/* AI Insight Panel */
+.ai-insight-panel {
+    background: rgba(179,136,255,0.05);
+    border: 1px solid rgba(179,136,255,0.2);
+    border-radius: 0.6rem;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+.ai-insight-title {
+    font-family:'Manrope',sans-serif; font-size:.6rem; font-weight:800;
+    color:#b388ff; text-transform:uppercase; letter-spacing:.15em;
+    margin-bottom:.75rem; display:flex; align-items:center; gap:.4rem;
+}
+.ai-confidence-track {
+    background:#1e2023; border-radius:.25rem; height:8px; overflow:hidden;
+    margin-top:.4rem;
+}
+.ai-confidence-fill {
+    height:100%; border-radius:.25rem;
+    background:linear-gradient(90deg,#b388ff,#00daf3);
+    transition: width 0.6s ease;
+}
+
+/* Alert Banners */
+.alert-critical-banner {
+    background: linear-gradient(135deg,#1a0505,#200808);
+    border: 1.5px solid #ff4b4b;
+    border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+    animation: pulse-critical 2s ease-in-out infinite;
+}
+@keyframes pulse-critical {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,75,75,0); }
+    50%      { box-shadow: 0 0 24px 4px rgba(255,75,75,.3); }
+}
+.alert-warning-banner {
+    background: #1a1608; border: 1.5px solid #ffba38;
+    border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: .75rem;
+}
+.alert-stable-banner {
+    background: #12140c; border: 1.5px solid #c3f400;
+    border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: .75rem;
+}
+.alert-title {
+    font-family:'Manrope',sans-serif; font-size:1rem; font-weight:900;
+}
+.alert-msg {
+    font-family:'Inter',sans-serif; font-size:.8rem;
+    color:#bac9cc; margin-top:.25rem; line-height:1.55;
+}
+
+/* Arrhythmia Risk Badge */
+.arrhy-badge {
+    display:inline-flex; align-items:center; gap:.3rem;
+    font-family:'Manrope',sans-serif; font-size:.6rem; font-weight:800;
+    text-transform:uppercase; letter-spacing:.08em;
+    padding:.15rem .55rem; border-radius:.25rem;
+    border: 1px solid;
+}
+
+/* Signal Quality Meter */
+.sqi-meter-wrap {
+    background: #1e2023; border-radius: .25rem; height: 10px;
+    overflow: hidden; position: relative;
+}
+.sqi-meter-fill {
+    height: 100%; border-radius: .25rem;
+    transition: width 0.5s ease;
+}
+.sqi-meter-label {
+    font-family:'Inter',sans-serif; font-size:.6rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.1em;
+    display:flex; justify-content:space-between; margin-bottom:.25rem;
+}
+
+/* Autonomic Balance Bar */
+.auto-balance-wrap {
+    background: #1e2023; border-radius: .25rem; height: 12px;
+    position: relative; overflow: hidden; margin: .35rem 0;
+}
+.auto-balance-sym {
+    position:absolute; left:0; top:0; bottom:0;
+    background:linear-gradient(90deg,#ffba38,#ff4b4b);
+    border-radius:.25rem 0 0 .25rem;
+}
+.auto-balance-para {
+    position:absolute; right:0; top:0; bottom:0;
+    background:linear-gradient(90deg,#00daf3,#c3f400);
+    border-radius:0 .25rem .25rem 0;
+}
+.auto-balance-center {
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:2px; height:100%; background:#849396;
+}
+
+/* Timeline Activity Feed */
+.timeline-item {
+    display:flex; gap:.75rem; align-items:flex-start;
+    padding:.6rem 0; border-bottom:1px solid #1e2023;
+    font-family:'Inter',sans-serif;
+}
+.timeline-item:last-child { border-bottom:none; }
+.timeline-dot {
+    width:10px; height:10px; border-radius:50%;
+    flex-shrink:0; margin-top:.2rem;
+}
+.timeline-text { font-size:.75rem; color:#bac9cc; line-height:1.5; }
+.timeline-time { font-size:.6rem; color:#3b494c; margin-top:.15rem; }
+
+/* Patient Card */
+.patient-card {
+    background: #111316; border: 1px solid #1e2023;
+    border-radius: .6rem; padding: 1rem 1.1rem;
+    transition: all .2s; position: relative; overflow: hidden;
+}
+.patient-card:hover { border-color:#282a2d; transform:translateY(-2px); }
+.patient-card .pt-accent { position:absolute;top:0;left:0;right:0;height:2.5px; }
+.patient-name {
+    font-family:'Manrope',sans-serif; font-size:.95rem; font-weight:800; color:#e2e2e6;
+}
+.patient-meta {
+    font-family:'Inter',sans-serif; font-size:.7rem; color:#849396; margin-top:.15rem;
+}
+
+/* Report Print Styles */
+@media print {
+    #MainMenu, footer, .stDeployButton,
+    section[data-testid="stSidebar"],
+    [data-testid="stSidebarCollapsedControl"],
+    header, .stButton, .stSelectbox { display:none !important; }
+    .stApp { background:#ffffff !important; }
+    .sentinel-header { background:#ffffff !important; border-color:#e0e0e0 !important; }
+    .sentinel-header h1 { color:#1a1a2e !important; }
+    body { font-size:11pt; }
+    .kpi-card { background:#f9f9f9 !important; border-color:#e0e0e0 !important; }
+    .kpi-value { color:#1a1a2e !important; }
+    .kpi-label { color:#666 !important; }
+    .clinical-card { background:#f5f5f5 !important; }
+    .clinical-body { color:#333 !important; }
+    .section-header { color:#666 !important; }
+    .section-header::after { background:#e0e0e0 !important; }
+}
+
+/* Responsive Tablet */
+@media (max-width: 1024px) {
+    .vitals-grid { grid-template-columns: repeat(2,1fr) !important; }
+    .dash-grid { grid-template-columns: 1fr !important; }
+    .dash-grid3 { grid-template-columns: repeat(2,1fr) !important; }
+    .hero-ecg { display:none; }
+    .pipeline-timeline { gap:0.1rem; padding:.8rem; }
+}
+@media (max-width: 768px) {
+    .dash-grid3 { grid-template-columns: 1fr !important; }
+    .vitals-grid { grid-template-columns: 1fr 1fr !important; }
+    .cmd-title { font-size:1.3rem !important; }
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background: rgba(30,32,35,0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(59,73,76,0.5);
+    border-radius: .6rem;
+    padding: 1.1rem 1.25rem;
+}
+
+/* Premium button overrides */
+.stButton > button {
+    font-family:'Manrope',sans-serif !important;
+    font-weight:700 !important;
+    font-size:.72rem !important;
+    text-transform:uppercase !important;
+    letter-spacing:.05em !important;
+    border-radius:.35rem !important;
+    transition: all .2s ease !important;
+}
+.stButton > button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0,218,243,.2) !important;
+}
+
+/* Status chips */
+.status-chip {
+    display:inline-flex; align-items:center; gap:.35rem;
+    font-family:'Inter',sans-serif; font-size:.6rem; font-weight:600;
+    padding:.2rem .6rem; border-radius:2rem; border:1px solid;
+}
+
+/* HRV Health Score Ring */
+.hrv-score-ring {
+    display:flex; flex-direction:column; align-items:center;
+    padding:1.2rem;
+}
+.hrv-score-val {
+    font-family:'Manrope',sans-serif; font-size:3rem; font-weight:900;
+    line-height:1; color:#c3f5ff;
+}
+.hrv-score-grade {
+    font-family:'Manrope',sans-serif; font-size:.65rem; font-weight:800;
+    text-transform:uppercase; letter-spacing:.1em; margin-top:.3rem;
+}
 </style>
 """
 
@@ -759,6 +989,126 @@ def save_all_figures(filename, charts_dict):
 
 def section_header(title: str):
     st.markdown(f'<div class="section-header">{title}</div>', unsafe_allow_html=True)
+
+
+def vitals_card(label: str, value: str, unit: str = "", sub: str = "",
+                color: str = "#00daf3", icon: str = "") -> str:
+    """ICU-style large vitals display card."""
+    return f"""
+    <div class="icu-vitals-card">
+      <div class="icu-top-bar" style="background:{color};"></div>
+      <div class="icu-v-label">
+        <span style="width:7px;height:7px;border-radius:50%;background:{color};
+                     display:inline-block;animation:blink-dot 1.5s infinite;"></span>
+        {icon} {label}
+      </div>
+      <div class="icu-v-value" style="color:{color};">{value}<span class="icu-v-unit">{unit}</span></div>
+      <div class="icu-v-sub">{sub}</div>
+    </div>"""
+
+
+def ai_insight_panel(title: str, confidence: float, findings: list,
+                     recommendations: list = None):
+    """Render AI diagnostic insight panel in Streamlit."""
+    findings_html = "".join(
+        f'<div class="ai-finding" style="display:flex;gap:.6rem;padding:.45rem 0;'
+        f'border-bottom:1px solid rgba(179,136,255,.08);font-family:Inter;font-size:.75rem;color:#bac9cc;">'
+        f'<span>{icon}</span><div><strong style="color:{color};">{msg}</strong></div></div>'
+        for icon, msg, color in findings
+    )
+    recs_html = ""
+    if recommendations:
+        recs_html = "".join(
+            f'<div style="padding:.3rem 0;font-family:Inter;font-size:.73rem;color:#bac9cc;'
+            f'border-bottom:1px solid #1e2023;">• {r}</div>'
+            for r in recommendations
+        )
+    st.markdown(f"""
+    <div class="ai-insight-panel">
+      <div class="ai-insight-title">🤖 {title}</div>
+      <div style="margin-bottom:.6rem;">
+        <div style="font-size:.6rem;color:#849396;font-family:Inter;text-transform:uppercase;
+                    letter-spacing:.1em;margin-bottom:.2rem;">Model Confidence</div>
+        <div style="font-family:Manrope;font-size:1.2rem;font-weight:800;color:#b388ff;">{confidence:.0f}%</div>
+        <div class="ai-confidence-track"><div class="ai-confidence-fill" style="width:{confidence}%;"></div></div>
+      </div>
+      {findings_html}
+      {('<div style="margin-top:.6rem;">' + recs_html + '</div>') if recs_html else ''}
+    </div>""", unsafe_allow_html=True)
+
+
+def alert_banner(severity: str, metric: str, message: str, timestamp: str = ""):
+    """Render an emergency alert banner."""
+    colors = {"CRITICAL":"#ff4b4b","WARNING":"#ffba38","STABLE":"#c3f400","INFO":"#00daf3"}
+    icons  = {"CRITICAL":"🚨","WARNING":"⚠️","STABLE":"✅","INFO":"ℹ️"}
+    css_cls = {"CRITICAL":"alert-critical-banner","WARNING":"alert-warning-banner",
+               "STABLE":"alert-stable-banner"}.get(severity,"alert-warning-banner")
+    c = colors.get(severity,"#849396")
+    i = icons.get(severity,"ℹ️")
+    st.markdown(f"""
+    <div class="{css_cls}">
+      <div class="alert-title" style="color:{c};">{i} {severity} — {metric}</div>
+      <div class="alert-msg">{message}</div>
+      {f'<div style="font-size:.65rem;color:#849396;margin-top:.25rem;">{timestamp}</div>' if timestamp else ''}
+    </div>""", unsafe_allow_html=True)
+
+
+def signal_quality_meter(sqi_score: float, label: str = "Signal Quality"):
+    """Render an animated SQI bar meter."""
+    color = "#c3f400" if sqi_score >= 70 else "#ffba38" if sqi_score >= 40 else "#ff4b4b"
+    grade = "Excellent" if sqi_score >= 85 else "Good" if sqi_score >= 70 else \
+            "Acceptable" if sqi_score >= 40 else "Poor"
+    st.markdown(f"""
+    <div style="margin:.5rem 0;">
+      <div class="sqi-meter-label">
+        <span style="color:#849396;font-family:Inter;font-size:.6rem;text-transform:uppercase;
+                     letter-spacing:.1em;">{label}</span>
+        <span style="color:{color};font-family:Manrope;font-size:.65rem;font-weight:800;">
+          {sqi_score:.0f}% · {grade}
+        </span>
+      </div>
+      <div class="sqi-meter-wrap">
+        <div class="sqi-meter-fill" style="width:{min(sqi_score,100):.0f}%;
+             background:linear-gradient(90deg,{color}88,{color});"></div>
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+
+def autonomic_balance_bar(lf_pct: float, hf_pct: float):
+    """Render sympathetic vs parasympathetic balance visual."""
+    sym_w = min(lf_pct, 100)
+    par_w = min(hf_pct, 100)
+    total = sym_w + par_w
+    sym_frac = int(sym_w / total * 50) if total > 0 else 25
+    par_frac = int(par_w / total * 50) if total > 0 else 25
+    st.markdown(f"""
+    <div style="margin:.5rem 0;">
+      <div style="display:flex;justify-content:space-between;font-family:Inter;font-size:.6rem;
+                  text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;">
+        <span style="color:#ffba38;">Sympathetic {lf_pct:.0f}%</span>
+        <span style="color:#00daf3;">Parasympathetic {hf_pct:.0f}%</span>
+      </div>
+      <div class="auto-balance-wrap">
+        <div class="auto-balance-sym" style="width:{sym_frac}%;"></div>
+        <div class="auto-balance-para" style="width:{par_frac}%;"></div>
+        <div class="auto-balance-center"></div>
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+
+def arrhythmia_badge(arrhythmia_type: str, confidence: float) -> str:
+    """Return colored arrhythmia classification badge HTML."""
+    colors = {
+        "Normal Sinus": ("#c3f400","#12140c"),
+        "Atrial Fibrillation": ("#ff4b4b","#1a0505"),
+        "Tachycardia": ("#ffba38","#1a1608"),
+        "Bradycardia": ("#00daf3","#080e12"),
+        "PVC/Ectopic": ("#b388ff","#0e0814"),
+        "Inconclusive": ("#849396","#1a1c1f"),
+    }
+    c, bg = colors.get(arrhythmia_type, ("#849396","#1a1c1f"))
+    return (f'<span class="arrhy-badge" style="color:{c};background:{bg};border-color:{c}55;">'
+            f'{arrhythmia_type} · {confidence:.0f}%</span>')
 
 
 def hex_to_rgba(hex_str: str, opacity: float = 1.0) -> str:

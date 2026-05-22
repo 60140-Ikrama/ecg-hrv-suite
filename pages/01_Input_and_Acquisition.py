@@ -6,7 +6,8 @@ import sys, os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from components.theme import (inject_stitch_theme, sentinel_header,
-                               pipeline_status_bar, kpi_card, COLORS, get_plot_layout, set_layout)
+                               pipeline_status_bar, kpi_card, COLORS, get_plot_layout, set_layout,
+                               signal_quality_meter)
 from components.sidebar_settings import render_sidebar_settings
 from utils.data_loader import load_ecg_file
 from utils.signal_processing import compute_sqi
@@ -193,20 +194,85 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Raw ECG plot ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header" style="margin-top:0.8rem;">Raw ECG Signal</div>',
+    # ── ECG Viewer Controls
+    st.markdown('<div class="section-header" style="margin-top:0.8rem;">ECG Viewer</div>',
                 unsafe_allow_html=True)
-    t  = np.arange(len(signal)) / sfreq
-    step = max(1, len(signal) // 50_000)
+    ctrl_col1, ctrl_col2, ctrl_col3, ctrl_col4 = st.columns([2,2,2,2])
+    with ctrl_col1:
+        win_sec = st.selectbox("Time Window", [5,10,25,30], index=1,
+                               label_visibility="collapsed",
+                               format_func=lambda x: f"{x}s window")
+    with ctrl_col2:
+        gain = st.selectbox("Gain", [0.5,1.0,2.0,4.0], index=1,
+                            label_visibility="collapsed",
+                            format_func=lambda x: f"Gain ×{x}")
+    with ctrl_col3:
+        lead_lbl = st.selectbox("Lead", ["Lead I","Lead II","V1","V2","V5"], index=0,
+                                label_visibility="collapsed")
+    with ctrl_col4:
+        start_pct = st.slider("", 0, 100, 0, 5, label_visibility="collapsed",
+                              help="Scroll position in recording (%)")
+
+    # Compute window
+    total_samples = len(signal)
+    win_samples = min(int(win_sec * sfreq), total_samples)
+    start_sample = int(start_pct / 100 * max(total_samples - win_samples, 1))
+    seg = signal[start_sample:start_sample + win_samples] * gain
+    t   = np.arange(len(seg)) / sfreq + start_sample / sfreq
+
+    # Hospital-style ECG plot (green-on-dark with clinical grid)
     fig = go.Figure()
+    # Background hospital grid (minor + major)
     fig.add_trace(go.Scatter(
-        x=t[::step], y=signal[::step], mode='lines', name='Raw ECG',
-        line=dict(color=COLORS["outline"], width=1.2),
-        hovertemplate="t=%{x:.3f}s  amp=%{y:.4f}<extra>Raw ECG</extra>"))
-    set_layout(fig, f"Raw ECG — {selected}", xaxis_title="Time (s)", yaxis_title="Amplitude")
-    fig.update_layout(height=400)
+        x=t, y=seg, mode='lines', name=lead_lbl,
+        line=dict(color='#00e676', width=1.5),
+        hovertemplate="t=%{x:.3f}s  amp=%{y:.4f}<extra></extra>"))
+    fig.update_layout(
+        paper_bgcolor='#050a07', plot_bgcolor='#050a07',
+        height=380,
+        margin=dict(l=50,r=20,t=30,b=40),
+        font=dict(family='Inter, sans-serif', color='#4caf7d', size=10),
+        xaxis=dict(
+            title=dict(text='Time (s)', font=dict(color='#4caf7d', size=10)),
+            gridcolor='rgba(0,180,80,.15)', griddash='solid',
+            showgrid=True, dtick=0.2, minor=dict(dtick=0.04, showgrid=True, gridcolor='rgba(0,150,60,.07)'),
+            linecolor='rgba(0,180,80,.3)', tickfont=dict(color='#4caf7d'),
+            zeroline=False, range=[t[0], t[-1]]),
+        yaxis=dict(
+            title=dict(text=f'Amplitude (Gain ×{gain})', font=dict(color='#4caf7d', size=10)),
+            gridcolor='rgba(0,180,80,.15)', griddash='solid',
+            showgrid=True, linecolor='rgba(0,180,80,.3)', tickfont=dict(color='#4caf7d'),
+            zeroline=True, zerolinecolor='rgba(0,200,80,.25)'),
+        legend=dict(bgcolor='rgba(5,10,7,.8)', bordercolor='rgba(0,180,80,.3)',
+                    font=dict(color='#4caf7d')),
+        title=dict(text=f'🏥 {lead_lbl} — {selected} — {start_sample/sfreq:.1f}s to {(start_sample+win_samples)/sfreq:.1f}s',
+                   font=dict(color='#00e676', size=13)),
+    )
     st.plotly_chart(fig, use_container_width=True,
-                    config={"displayModeBar": True, "scrollZoom": True})
+                    config={"displayModeBar":True, "scrollZoom":True,
+                            "modeBarButtonsToAdd":["drawline","drawopenpath","eraseshape"]})
+
+    # Signal quality meter
+    signal_quality_meter(sqi["overall_sqi"], "Signal Quality Index")
+
+    # Noise classification
+    snr = sqi.get('snr_db', 0)
+    noise_type = ("Muscle Artifact" if sqi.get('kurtosis_sqi',50) < 30 else
+                  "Baseline Wander" if sqi.get('baseline_sqi',50) < 40 else
+                  "Powerline Interference" if snr < 10 else
+                  "Low Noise" if snr > 20 else "Mixed Noise")
+    noise_c = "#ff4b4b" if "Artifact" in noise_type else "#ffba38" if noise_type!="Low Noise" else "#c3f400"
+    st.markdown(f"""
+    <div style="display:flex;gap:1rem;align-items:center;margin:.4rem 0;padding:.5rem .9rem;
+                background:#0c0e11;border:1px solid #1e2023;border-radius:.35rem;">
+      <span style="font-size:.6rem;color:#849396;font-family:'Inter',sans-serif;
+                   text-transform:uppercase;letter-spacing:.1em;">AI Noise Classification</span>
+      <span style="background:{noise_c}18;color:{noise_c};border:1px solid {noise_c}55;
+                   font-family:'Manrope',sans-serif;font-size:.65rem;font-weight:800;
+                   padding:.12rem .45rem;border-radius:.2rem;">{noise_type}</span>
+      <span style="font-size:.68rem;color:#849396;font-family:'Inter';">SNR: {snr:.1f} dB</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── SQI detail panel ─────────────────────────────────────────────────────
     with st.expander("🔍 Signal Quality Detail"):
