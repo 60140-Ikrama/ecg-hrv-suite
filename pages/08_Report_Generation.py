@@ -437,19 +437,20 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
             ("dfa",           "Figure 8: Detrended Fluctuation Analysis (DFA)"),
         ]
         
-        for ckey, clabel in chart_order:
-            if ckey in charts:
-                story.append(Paragraph(clabel, body))
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-                    tmp.write(charts[ckey])
-                    tpath = tmp.name
-                # Adjust size for poincare and dfa to fit well
-                c_height = 6*cm
-                if ckey == "poincare": c_height = 10*cm
-                story.append(RLImage(tpath, width=16*cm, height=c_height))
-                _os.remove(tpath)
-                story.append(Spacer(1, 0.4*cm))
-        
+		for ckey, clabel in chart_order:
+			if ckey in charts and charts[ckey]:
+				story.append(Paragraph(clabel, body))
+				with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+					tmp.write(charts[ckey])
+					tpath = tmp.name
+				# Adjust size for poincare and dfa to fit well
+				c_height = 6*cm
+				if ckey == "poincare": c_height = 10*cm
+				story.append(RLImage(tpath, width=16*cm, height=c_height))
+				_os.remove(tpath)
+				story.append(Spacer(1, 0.4*cm))
+			else:
+				st.session_state.setdefault("report_errors", []).append(f"Chart '{ckey}' missing; skipped in PDF.")        
         # ── Heart Disease Risk Section ──────────────────────────────────────
         story.append(Paragraph("<b>Heart Disease Risk Assessment</b>", body))
         raw_rr_cache = {}
@@ -783,31 +784,7 @@ def main():
 
     section_header("Export Options")
     
-    col_pdf, col_docx, col_html, col_latex = st.columns([1, 1, 1, 1])
-    
-    with col_pdf:
-        if st.button("Generate PDF Report", use_container_width=True):
-            with st.spinner("Building PDF..."):
-                st.session_state["report_errors"] = []
-                st.session_state["pdf_bytes"] = build_pdf_report(metrics_dict, settings, sqi_cache)
-                if st.session_state.get("report_errors"):
-                    for err in st.session_state["report_errors"]:
-                        st.warning(f"⚠️ {err}")
-                
-        if "pdf_bytes" in st.session_state:
-            st.download_button("Download PDF", data=st.session_state["pdf_bytes"], file_name="HRV_Report.pdf", mime="application/pdf", use_container_width=True)
-
-    with col_docx:
-        if st.button("Generate DOCX", use_container_width=True):
-            with st.spinner("Building Word Doc..."):
-                st.session_state["report_errors"] = []
-                st.session_state["docx_bytes"] = build_docx_report(metrics_dict, settings, sqi_cache)
-                if st.session_state.get("report_errors"):
-                    for err in st.session_state["report_errors"]:
-                        st.warning(f"⚠️ {err}")
-                
-        if "docx_bytes" in st.session_state:
-            st.download_button("Download DOCX", data=st.session_state["docx_bytes"], file_name="HRV_Report.docx", use_container_width=True)
+    col_html = st.columns([1])[0]
 
     with col_html:
         if st.button("Publish (HTML)", use_container_width=True, help="Generate a self-contained interactive MATLAB-style report"):
