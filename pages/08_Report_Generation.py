@@ -437,20 +437,20 @@ def build_pdf_report(metrics_dict: dict, settings: dict, sqi_cache: dict) -> byt
             ("dfa",           "Figure 8: Detrended Fluctuation Analysis (DFA)"),
         ]
         
-		for ckey, clabel in chart_order:
-			if ckey in charts and charts[ckey]:
-				story.append(Paragraph(clabel, body))
-				with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-					tmp.write(charts[ckey])
-					tpath = tmp.name
-				# Adjust size for poincare and dfa to fit well
-				c_height = 6*cm
-				if ckey == "poincare": c_height = 10*cm
-				story.append(RLImage(tpath, width=16*cm, height=c_height))
-				_os.remove(tpath)
-				story.append(Spacer(1, 0.4*cm))
-			else:
-				st.session_state.setdefault("report_errors", []).append(f"Chart '{ckey}' missing; skipped in PDF.")        
+        for ckey, clabel in chart_order:
+            if ckey in charts and charts[ckey]:
+                story.append(Paragraph(clabel, body))
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                    tmp.write(charts[ckey])
+                    tpath = tmp.name
+                # Adjust size for poincare and dfa to fit well
+                c_height = 6*cm
+                if ckey == "poincare": c_height = 10*cm
+                story.append(RLImage(tpath, width=16*cm, height=c_height))
+                _os.remove(tpath)
+                story.append(Spacer(1, 0.4*cm))
+            else:
+                st.session_state.setdefault("report_errors", []).append(f"Chart '{ckey}' missing; skipped in PDF.")
         # ── Heart Disease Risk Section ──────────────────────────────────────
         story.append(Paragraph("<b>Heart Disease Risk Assessment</b>", body))
         raw_rr_cache = {}
